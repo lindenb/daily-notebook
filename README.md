@@ -1,2 +1,4 @@
 # daily-notebook
-daily notebook
+
+My Daily Notebook
+

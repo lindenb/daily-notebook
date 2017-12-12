@@ -1,0 +1,8 @@
+jeter*
+*~
+*.tmp
+tmp.*
+*.class
+*.o
+a.out
+
