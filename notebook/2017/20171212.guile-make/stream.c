@@ -15,7 +15,11 @@ struct Record
 
 static SCM guile_expand_wrapper(SCM obj1,SCM obj2)
   {
+ struct  Record* rec;
   fprintf(stderr,"called %p %d.\n",obj1,(int)scm_is_bool(obj2));
+  
+  rec=(struct Record*)scm_to_pointer(obj1);
+   fprintf(stderr," AND -> %d %d\n",rec->a,rec->b);
   return SCM_BOOL_T;
   }
 
@@ -46,9 +50,10 @@ int main(int argc,char** argv) {
 		struct Record rec;
 		rec.a = rand();
 		rec.b = rand();
-		
+		SCM sc_ptr = scm_from_pointer((void*)&rec,NULL);
 		scm_c_define("rec-a", scm_from_int(rec.a));
 		scm_c_define("rec-b", scm_from_int(rec.b));
+		scm_c_define("myptr",sc_ptr);
 		//  obj_to_str = scm_variable_ref (scm_c_module_lookup (make_mod, "obj-to-str"));
 		SCM ret=scm_c_eval_string (argv[1]);
 		if(!scm_is_bool(ret))
