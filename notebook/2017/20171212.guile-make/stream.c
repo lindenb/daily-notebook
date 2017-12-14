@@ -16,7 +16,7 @@ struct Record
 static SCM guile_expand_wrapper(SCM obj1,SCM obj2)
   {
  struct  Record* rec;
-  fprintf(stderr,"called %p %d.\n",obj1,(int)scm_is_bool(obj2));
+  fprintf(stderr,"called %p undefined2=%d.\n",obj1,SCM_UNDEFINED == obj2);
   
   rec=(struct Record*)scm_to_pointer(obj1);
    fprintf(stderr," AND -> %d %d\n",rec->a,rec->b);
