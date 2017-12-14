@@ -1,6 +1,6 @@
-CXX=@CXX@
-LD=@CXX@
-CXXFLAGS=@CXXFLAGS@
+CC=@CC@
+LD=@CC@
+
 
 program: program.o
 	$(LD) -o $@ $^
@@ -9,5 +9,3 @@ program: program.o
 clean:
 	rm -f program *.o
 
-program.c:
-	echo 'void main(){}' > $@
