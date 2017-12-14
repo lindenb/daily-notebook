@@ -1,0 +1,13 @@
+CXX=@CXX@
+LD=@CXX@
+CXXFLAGS=@CXXFLAGS@
+
+program: program.o
+	$(LD) -o $@ $^
+
+.PHONY: clean
+clean:
+	rm -f program *.o
+
+program.c:
+	echo 'void main(){}' > $@

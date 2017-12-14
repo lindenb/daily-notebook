@@ -18,7 +18,7 @@ static SCM guile_expand_wrapper(SCM obj1,SCM obj2)
  struct  Record* rec;
  fprintf(stderr,"called ok\n");
  
-  fprintf(stderr,"called %d undefined2=%d.\n",SCM_UNDEFINED == obj2,SCM_UNDEFINED == obj2);
+  fprintf(stderr,"called %d undefined2=%d.\n",scm_is_eq(SCM_UNDEFINED,obj2),scm_is_eq(SCM_UNDEFINED,obj2));
   
   rec=(struct Record*)scm_to_pointer(obj1);
   fprintf(stderr,"[1]ptr=%p\n",rec);
