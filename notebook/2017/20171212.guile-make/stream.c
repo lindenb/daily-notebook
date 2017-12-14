@@ -16,9 +16,13 @@ struct Record
 static SCM guile_expand_wrapper(SCM obj1,SCM obj2)
   {
  struct  Record* rec;
-  fprintf(stderr,"called %p undefined2=%d.\n",obj1,SCM_UNDEFINED == obj2);
+ fprintf(stderr,"called ok\n");
+ 
+  fprintf(stderr,"called %d undefined2=%d.\n",SCM_UNDEFINED == obj2,SCM_UNDEFINED == obj2);
   
   rec=(struct Record*)scm_to_pointer(obj1);
+  fprintf(stderr,"[1]ptr=%p\n",rec);
+  
    fprintf(stderr," AND -> %d %d\n",rec->a,rec->b);
   return SCM_BOOL_T;
   }
@@ -27,11 +31,11 @@ static void guile_define_module (void *data UNUSED)
 	{
 	scm_c_define_gsubr ("call1", 1, 1, 0, guile_expand_wrapper);
 	scm_c_define_gsubr ("call2", 1, 1, 0, guile_expand_wrapper);
+	scm_c_export("call1","call2",NULL);
 	}
 static void *guile_init (void *arg UNUSED)
 	{
-	//make_mod = scm_c_define_module ("lindenb record", guile_define_module, NULL);
-	guile_define_module(NULL);
+	make_mod = scm_c_define_module ("lindenb", guile_define_module, NULL);
 	return NULL;
 	}
 
@@ -42,7 +46,20 @@ int main(int argc,char** argv) {
 	/* Start up the Guile interpeter */
 	scm_init_guile();
 	scm_with_guile (guile_init, NULL);
-	//scm_c_eval_string ("(use-modules (lindenb record))");
+	scm_c_use_module("lindenb");
+	fprintf(stderr,"Read user's script\n");
+	scm_c_eval_string (argv[1]);
+	fprintf(stderr,"lookup...\n");
+	SCM filterfun = scm_c_lookup("zz");
+	if(scm_is_false(scm_variable_p(filterfun)))
+		{
+		fprintf(stderr,"not a proc...\n");
+		//return -1;
+		}
+	fprintf(stderr,"lookup ok...\n");
+	
+	
+	SCM filterproc=scm_variable_ref(filterfun);
 	
 	long max_iter=100000;
 	while(--max_iter>0)
@@ -50,17 +67,19 @@ int main(int argc,char** argv) {
 		struct Record rec;
 		rec.a = rand();
 		rec.b = rand();
+		//fprintf(stderr,"[0]ptr=%p\n",&rec);
 		SCM sc_ptr = scm_from_pointer((void*)&rec,NULL);
 		scm_c_define("rec-a", scm_from_int(rec.a));
 		scm_c_define("rec-b", scm_from_int(rec.b));
-		scm_c_define("myptr",sc_ptr);
-		//  obj_to_str = scm_variable_ref (scm_c_module_lookup (make_mod, "obj-to-str"));
-		SCM ret=scm_c_eval_string (argv[1]);
+		//SCM myptr = scm_c_define("myptr",sc_ptr);
+		
+		SCM ret=scm_call_1(filterproc,sc_ptr);
 		if(!scm_is_bool(ret))
 			{
 			fprintf(stderr,"Not a boolean...\n");
 			continue;
 			}
+		
 		int success = scm_to_bool (ret);
 		if(success) printf("%d %d\n",rec.a,rec.b);
 		
