@@ -1,11 +1,12 @@
-CC=@CC@
-LD=@CC@
+bin_PROGRAMS = program
+program_SOURCES = program.c
+CFLAGS=@CFLAGS@
+LDFLAGS=@LDFLAGS@
 
+all: program
 
-program: program.o
-	$(LD) -o $@ $^
+program :  program.c
+	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
 
-.PHONY: clean
 clean:
-	rm -f program *.o
-
+	rm -f program

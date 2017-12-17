@@ -2,7 +2,13 @@ all:
 	 autoreconf -vif
 	 ./configure --with-guile
 	 make -B
-
+	 ./program
+	 make -B clean
+	 autoreconf -vif
+	 ./configure
+	 make -B
+	 ./program
+	 make -B clean	 
 
 
 clean:
