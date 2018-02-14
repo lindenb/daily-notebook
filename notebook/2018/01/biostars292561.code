@@ -1,0 +1,55 @@
+private List<Interval> intervals=null;
+public Object apply(final SAMRecord record) {
+	if(this.intervals==null)
+		{
+		/** first call: we load the BED file "junction.bed" */
+		try
+			{
+			java.io.BufferedReader r=new java.io.BufferedReader(new java.io.FileReader("junction.bed"));
+			this.intervals = r.lines().
+				filter(S->!(S.isEmpty() || S.startsWith("track")|| S.startsWith("browser"))).
+				map(S->{
+					final String tokens[]=S.split("[\t]");
+					return new Interval(tokens[0],1+Integer.parseInt(tokens[1]),Integer.parseInt(tokens[2]));
+					}).
+				collect(Collectors.toList());
+			r.close();
+			}
+		catch(Exception err)
+			{
+			throw  new RuntimeException(err);
+			}
+		}
+	// ignore unmapped
+	if(record.getReadUnmappedFlag()) return false;
+	final Cigar cigar = record.getCigar();
+	if(cigar==null || cigar.isEmpty()) return false;
+	// loop over the cigar string
+	int pos = record.getStart();
+	for(final CigarElement ce: cigar)
+		{
+		final CigarOperator op= ce.getOperator();
+		if(op.isAlignment()) // it's 'M' or 'X' or '='
+			{
+			// search overlapping our bed list
+			for(final Interval r:this.intervals)
+				{
+				//found !
+				if(r.getContig().equals(record.getContig()) &&
+					pos <=r.getStart() &&
+					(pos+ce.getLength()) >= r.getEnd())
+					{
+					// accept this sam record
+					return true;
+					}
+				}
+			}
+		if(op.consumesReferenceBases())
+			{
+			pos+=ce.getLength();
+			}
+		}
+	// we don't accept
+	return false;
+	}
+
