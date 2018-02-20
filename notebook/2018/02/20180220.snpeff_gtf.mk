@@ -1,7 +1,7 @@
 .PHONY:all
 
 all:snpEff/snpEff.jar Homo_sapiens.GRCh37.87.chromosome.MT.gff3
-	java -jar $< build -gff3 
+	java -jar $< build -gff3 XX
 
 snpEff/snpEff.jar:
 	rm -f snpEff jeter.zip
