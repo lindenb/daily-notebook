@@ -1,0 +1,23 @@
+<html lang="en-US">
+<head prefix="og: http://ogp.me/ns#">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+  <script>
+  function goFullScreen(id) {
+    var elem = document.getElementById(id);
+    if (elem && elem.requestFullscreen) {
+       elem.requestFullscreen();
+	     }
+	  else
+	  	{
+	  	console.log("Cannot "+id+" "+elem+" "+elem.requestFullscreen);
+	  	}
+	  }
+	  
+  </script>
+</head>
+<body>
+<div ><img id="lenna" width="100" src="https://upload.wikimedia.org/wikipedia/en/2/24/Lenna.png" alt="Lenna" /></div><br/><button onclick="goFullScreen('lenna');">Full screen</button>
+<p>Doesn't work. Looks like only video works</p>
+</body>
+</html>
