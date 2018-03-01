@@ -38,6 +38,7 @@
 (gimp-image-add-layer img bg 0)
 (gimp-layer-add-alpha bg)
 (gimp-drawable-set-visible bg TRUE)
+(gimp-image-select-ellipse img CHANNEL-OP-REPLACE 0 0 imgwidth imgheight)
 (set! selection (car (gimp-selection-save img)))
 
 ;(display (string-append "active layer : " (car (gimp-item-get-name activedrawable)) "\n"))
@@ -56,14 +57,15 @@
 		
 		(gimp-palette-set-foreground pickColor)
 		;;(gimp-image-select-ellipse img CHANNEL-OP-INTERSECT (- x radius) (- y radius) (* 2 radius) (* 2 radius))
-		(gimp-image-select-ellipse img CHANNEL-OP-REPLACE x y 15 15)
+		(gimp-image-select-ellipse img CHANNEL-OP-INTERSECT x y 15 15)
 		(gimp-edit-bucket-fill bg 0 0 (random 100) 0 0 0 0)
-		;;(gimp-image-select-item img  CHANNEL-OP-REPLACE selection)
+		(gimp-image-select-item img  CHANNEL-OP-REPLACE selection)
 		(set! x (+ x 20))
 	)
 	(set! y (+ y 20))
 )
-
+; restore selection
+(gimp-image-select-item img  CHANNEL-OP-REPLACE selection)
 (gimp-image-undo-group-end img)
 
 (gimp-xcf-save 1 img img "jeter.xcf"  "jeter.xcf")
