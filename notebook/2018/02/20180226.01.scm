@@ -19,9 +19,8 @@
 )
 
 
-(gimp-image-flatten img)
-(gimp-xcf-save 1 img img "jeter.xcf"  "jeter.xcf")
-(display "done#################################\n")
+(set! bg (car (gimp-image-flatten img)))
+(gimp-xcf-save 1 img bg "jeter.xcf"  "jeter.xcf")
 
 )
 ;(gimp-quit 0)

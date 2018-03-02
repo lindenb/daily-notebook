@@ -1,6 +1,6 @@
 GIMP=gimp -i  -b -
 
-SCM=01 02 03
+SCM=01 02 03 04 05
 
 %.flag : %.scm lenna.png
 	cat $< | $(GIMP)

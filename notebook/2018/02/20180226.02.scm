@@ -68,8 +68,8 @@
 (gimp-image-select-item img  CHANNEL-OP-REPLACE selection)
 (gimp-image-undo-group-end img)
 
-(gimp-xcf-save 1 img img "jeter.xcf"  "jeter.xcf")
-(display "done#################################\n")
+(gimp-xcf-save 1 img bg "jeter.xcf"  "jeter.xcf")
+
 
 )
 ;(gimp-quit 0)
