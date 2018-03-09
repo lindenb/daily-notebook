@@ -6,3 +6,9 @@ tmp.*
 *.o
 a.out
 lex.yy.c
+lex.yy.h
+*.tab.c
+*.tab.h
+TMP
+JETER
+
