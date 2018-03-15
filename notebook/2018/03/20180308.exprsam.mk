@@ -1,5 +1,6 @@
 .SUFFIXES:
-a.out: lex.yy.o exprsam.tab.o exprsam.o  
+a.out: lex.yy.o exprsam.tab.o exprsam.o
+	gcc -o $@ $^
 
 lex.yy.o : lex.yy.c exprsam.h exprsam.tab.h lex.yy.h
 	gcc -o $@ -c $<
