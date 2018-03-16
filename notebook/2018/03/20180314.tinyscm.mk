@@ -4,7 +4,7 @@ test: a.out
 	./a.out '(display "hello\n")'
 	./a.out '(< 1 2)'
 	./a.out '(> 1 2)'
-	./a.out '(< aaazd'
+	./a.out '(+ 0.1 0.0)'
 
 a.out: 20180314.hello.c \
 	tinyscheme-1.41/dynload.c \

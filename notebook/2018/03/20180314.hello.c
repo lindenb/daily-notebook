@@ -15,7 +15,8 @@ scheme* scm = NULL;
 	scheme_set_input_port_file(scm, stdin);
 	scheme_set_output_port_file(scm, stderr);
 	sprintf(buffer,"(define x %s)",argv[1]);
-	
+
+	mk_symbol(scm,"sym1");	
 	scheme_load_string(scm, buffer);
 	rv = scheme_eval(scm, mk_symbol(scm, "x"));
 	if(rv==NULL)
@@ -24,6 +25,7 @@ scheme* scm = NULL;
 		}
 	if(is_number(rv)) fprintf(stderr,"number\n");
 	if(is_string(rv)) fprintf(stderr,"string\n");
+	if(is_real(rv)) fprintf(stderr,"real\n");
 	if(scm->NIL == rv ) fprintf(stderr,"nil\n");
 	if(scm->T == rv ) fprintf(stderr,"true\n");
 	if(scm->F == rv ) fprintf(stderr,"false\n");
