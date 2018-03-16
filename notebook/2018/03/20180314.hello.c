@@ -1,4 +1,6 @@
 #include "scheme.h"
+#include "scheme-private.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,6 +25,8 @@ scheme* scm = NULL;
 	if(is_number(rv)) fprintf(stderr,"number\n");
 	if(is_string(rv)) fprintf(stderr,"string\n");
 	if(scm->NIL == rv ) fprintf(stderr,"nil\n");
+	if(scm->T == rv ) fprintf(stderr,"true\n");
+	if(scm->F == rv ) fprintf(stderr,"false\n");
 
 	scheme_deinit(scm);
 return 0;
