@@ -6,6 +6,23 @@
 #include <string.h>
 #include <assert.h>
 
+typedef struct Filename {
+char path[FILENAME_MAX];
+} Filename;
+
+/*
+static pointer first_bytes(scheme *sc, pointer args) {
+for(; args != sc->NIL ;  args = pair_cdr( args ) )
+		{
+		if(is_real(arg)) {
+			v += rvalue( arg );
+			N++;
+		  }
+		}
+}*/
+
+
+
 static pointer fun_average(scheme *sc, pointer args)
 	{
 	double v=0.0;
@@ -50,7 +67,7 @@ scheme* scm = NULL;
 		fprintf(stderr,"NULL\n");
 		}
 	if(is_number(rv)) fprintf(stderr,"number\n");
-	if(is_integer(rv)) fprintf(stderr,"integer\n");
+	if(is_integer(rv)) fprintf(stderr,"integer %ld\n",ivalue(rv));
 	if(is_string(rv)) fprintf(stderr,"string\n");
 	if(is_real(rv)) fprintf(stderr,"real %f\n",rvalue( rv ));
 	if(scm->NIL == rv ) fprintf(stderr,"nil\n");
