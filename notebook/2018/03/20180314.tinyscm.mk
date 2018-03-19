@@ -5,6 +5,7 @@ test: a.out
 	./a.out '(< 1 2)'
 	./a.out '(> 1 2)'
 	./a.out '(+ 0.1 0.0)'
+	./a.out '(my-average 1.0 2.0 3.0 4.0 5.0)'
 
 a.out: 20180314.hello.c \
 	tinyscheme-1.41/dynload.c \
