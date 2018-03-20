@@ -2,6 +2,10 @@
 test: a.out
 	./a.out '(+ 1 1)'
 	./a.out '(display "hello\n")'
+	./a.out '(< 1 2)'
+	./a.out '(> 1 2)'
+	./a.out '(+ 0.1 0.0)'
+	./a.out '(my-average 1.0 2.0 3.0 4.0 5.0)'
 
 a.out: 20180314.hello.c \
 	tinyscheme-1.41/dynload.c \
@@ -18,5 +22,5 @@ tinyscheme-1.41/makefile :
 	touch -c $@
 
 clean:
-	rm -rf tinyscheme-1.41
+	rm -rf tinyscheme-1.41 a.out
 
