@@ -123,7 +123,8 @@ enum scheme_types {
   T_MACRO=12,
   T_PROMISE=13,
   T_ENVIRONMENT=14,
-  T_LAST_SYSTEM_TYPE=14
+  T_MYSTRUCT=15,
+  T_LAST_SYSTEM_TYPE=15
 };
 
 /* ADJ is enough slack to align cells in a TYPE_BITS-bit boundary */
@@ -250,6 +251,19 @@ INTERFACE INLINE int is_environment(pointer p) { return (type(p)==T_ENVIRONMENT)
 INTERFACE INLINE int is_immutable(pointer p) { return (typeflag(p)&T_IMMUTABLE); }
 /*#define setimmutable(p)  typeflag(p) |= T_IMMUTABLE*/
 INTERFACE INLINE void setimmutable(pointer p) { typeflag(p) |= T_IMMUTABLE; }
+
+// lindenb
+INTERFACE INLINE int is_mystruct(pointer p)     { return (type(p)==T_MYSTRUCT); }
+#define mystructvalue(p)      ((p)->_object._mystruct)
+
+static pointer mk_mystruct(scheme *sc,void* ptr) {
+	pointer x;
+	typeflag(x) = T_MYSTRUCT|T_ATOM;
+        mystructvalue(x).ptr = ptr;
+        return (x);
+	}
+
+
 
 #define caar(p)          car(car(p))
 #define cadr(p)          car(cdr(p))
@@ -1318,6 +1332,8 @@ static void gc(scheme *sc, pointer a, pointer b) {
 static void finalize_cell(scheme *sc, pointer a) {
   if(is_string(a)) {
     sc->free(strvalue(a));
+  } else if(is_mystruct(a)) {
+    fprintf(stderr,"finalize_cell for mystruct.\n");
   } else if(is_port(a)) {
     if(a->_object._port->kind&port_file
        && a->_object._port->rep.stdio.closeit) {
@@ -2020,7 +2036,9 @@ static void atom2str(scheme *sc, pointer l, int f, char **pp, int *plen) {
           snprintf(p,STRBUFFSIZE,"#<FOREIGN PROCEDURE %ld>", procnum(l));
      } else if (is_continuation(l)) {
           p = "#<CONTINUATION>";
-     } else {
+     } else if (is_mystruct(l)) {
+          p = "#<MYSTRUCT>";
+     }else {
           p = "#<ERROR>";
      }
      *pp=p;

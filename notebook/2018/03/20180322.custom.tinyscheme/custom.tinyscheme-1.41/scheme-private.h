@@ -4,6 +4,7 @@
 #define _SCHEME_PRIVATE_H
 
 #include "scheme.h"
+#include "my.h"
 /*------------------ Ugly internals -----------------------------------*/
 /*------------------ Of interest only to FFI users --------------------*/
 
@@ -48,6 +49,7 @@ struct cell {
       char   *_svalue;
       int   _length;
     } _string;
+    MyStruct _mystruct;//lindenb
     num _number;
     port *_port;
     foreign_func _ff;
