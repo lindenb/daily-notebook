@@ -11,3 +11,6 @@ lex.yy.h
 *.tab.h
 TMP
 JETER
+*.a
+*.so
+

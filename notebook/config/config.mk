@@ -1,5 +1,12 @@
 SHELL=/bin/bash
-maven_dir?=$(dir $(lastword $(MAKEFILE_LIST)))../maven
+config_dir=$(dir $(lastword $(MAKEFILE_LIST)))
+maven_dir?=$(config_dir)../maven
+
+
+ifneq ($(realpath $(config_dir)local.mk),)
+include $(realpath $(config_dir)local.mk)
+endif
+
 
 EMPTY :=
 SPACE := $(EMPTY) $(EMPTY)
@@ -26,3 +33,5 @@ $(maven_dir)/quartz-2.2.3/lib/quartz-2.2.3.jar :
 	wget -O "$(maven_dir)/jeter.tar.gz" "http://d2zwv9pap9ylyd.cloudfront.net/quartz-2.2.3-distribution.tar.gz"
 	(cd "$(maven_dir)" && tar xvfz jeter.tar.gz && rm jeter.tar.gz)
 	touch -c $@
+
+htslib_dir?=${HOME}/package/htslib
