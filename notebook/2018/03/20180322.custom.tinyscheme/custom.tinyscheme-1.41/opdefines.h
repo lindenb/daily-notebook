@@ -102,9 +102,20 @@
     _OP_DEF(opexe_2, "vector-length",                  1,  1,       TST_VECTOR,                      OP_VECLEN           )
     _OP_DEF(opexe_2, "vector-ref",                     2,  2,       TST_VECTOR TST_NATURAL,          OP_VECREF           )
     _OP_DEF(opexe_2, "vector-set!",                    3,  3,       TST_VECTOR TST_NATURAL TST_ANY,  OP_VECSET           )
+/*
+     The purpose of the columns is:
+       - Column A is the name of the subroutine that handles the op-code.
+       - Column B is the name of the op-code function.
+       - Columns C and D are the minimum and maximum number of arguments
+         that are accepted by the op-code.
+       - Column E is a set of flags that tells the interpreter the type of
+         each of the arguments expected by the op-code.
+       - Column OP is used in the scheme_opcodes enum located in the
+         scheme-private.h file.
+*/
     /* begin lindenb */
     _OP_DEF(opexe_3, "my-struct?",                     1,  1,       TST_ANY,                         OP_SYMBOLP          )
-    
+    _OP_DEF(opexe_3, "make-complex",                   2,  2,       TST_ANY,                         OP_SYMBOLP          )    
   
     
     /* end lindenb */

@@ -28,13 +28,18 @@ function docHrefs(doc) {
   return array;
   }
 
-function fun1() {
+function fun1(scrolly) {
 //
 var posts_on_page= docHrefs(document);
 
 function showig(array,idx) {
-   if(idx>=array.length) return;
+   if(idx>=array.length) {
+   	window.scrollTo(0,scrolly);
+   	fun1(scrolly + 10000 );
+   	return;
+   	}
    var s=array[idx];
+   console.log(""+(idx+1)+"/"+array.length+" "+s+ " y="+scrolly);
    var win = window.open("https://www.instagram.com"+s,s);
    win.addEventListener('load', function() {
 	  var iter2= win.document.evaluate(
@@ -68,6 +73,6 @@ showig(posts_on_page,0);
 }
 
 
-fun1();
+fun1(0);
 
 
