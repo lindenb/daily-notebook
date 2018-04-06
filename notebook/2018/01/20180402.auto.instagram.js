@@ -7,6 +7,9 @@ faire apparaitre un tag eg. https://www.instagram.com/explore/tags/drawing/ avan
 
 
 */
+
+var all_seen = [];
+
 function randomWait() {
    return (5 + Math.floor(Math.random() * 10)) * 1000;
 }
@@ -22,8 +25,10 @@ function docHrefs(doc) {
    if(att==null || 
      !att.value.startsWith("/p/") ||
      !att.value.includes("/?tagged=") ||
+     all_seen.includes(att.value) ||
      array.includes(att.value)) continue;
     array.push(att.value);
+    all_seen.push(att.value);
     }
   return array;
   }
@@ -34,12 +39,15 @@ var posts_on_page= docHrefs(document);
 
 function showig(array,idx) {
    if(idx>=array.length) {
+   	if(all_seen.length> 1000) return;
    	window.scrollTo(0,scrolly);
-   	fun1(scrolly + 10000 );
+   	setTimeout(function(){
+   		fun1(scrolly + 1 + 2*window.innerHeight );
+   		},30*1000);
    	return;
    	}
    var s=array[idx];
-   console.log(""+(idx+1)+"/"+array.length+" "+s+ " y="+scrolly);
+   console.log(""+(idx+1)+"/"+array.length+" "+s+ " y="+scrolly+" all_seen:"+all_seen.length);
    var win = window.open("https://www.instagram.com"+s,s);
    win.addEventListener('load', function() {
 	  var iter2= win.document.evaluate(
