@@ -1,0 +1,14 @@
+{
+"referenceFasta" : "rotavirus_rf.fa",
+"samples":[{
+	"name":"S1",
+	"reads":[
+		["/home/lindenb/src/jvarkit-git/src/test/resources/S1.R1.fq.gz","/home/lindenb/src/jvarkit-git/src/test/resources/S1.R2.fq.gz"],
+		["/home/lindenb/src/jvarkit-git/src/test/resources/S3.R1.fq.gz","/home/lindenb/src/jvarkit-git/src/test/resources/S3.R2.fq.gz"]
+		]
+	},
+	{
+	"name":"S2",
+	"reads":[["/home/lindenb/src/jvarkit-git/src/test/resources/S2.R1.fq.gz","/home/lindenb/src/jvarkit-git/src/test/resources/S2.R2.fq.gz"]]
+	}]
+}
