@@ -9,6 +9,6 @@ nextflow:
 	chmod +x nextflow
 	mkdir -p ${NXF_HOME}
 clean:
-	rm -rf work  .nextflow.log*
+	rm -rf work  .nextflow.log* 
 clean-all: clean
-	rm -rf nextflow "${NXF_HOME}"
+	rm -rf nextflow "${NXF_HOME}" "${HOME}/.nextflow"
