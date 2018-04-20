@@ -27,11 +27,10 @@ function docHrefs(doc) {
    if(att==null || 
      !att.value.startsWith("/p/") ||
      !att.value.includes("/?tagged=") ||
-     array.includes(att.value) ||
-     all_seen_array.includes(att.value)
-     ) continue;
+     all_seen.includes(att.value) ||
+     array.includes(att.value)) continue;
     array.push(att.value);
-    all_seen_array.push(att.value);
+    all_seen.push(att.value);
     }
   return array;
   }
@@ -42,18 +41,17 @@ var posts_on_page= docHrefs(document);
 
 function showig(array,idx) {
     console.log(""+(idx+1)+"/"+array.length+" y="+scrolly);
-    if(idx>=array.length) {
-		if(all_seen_array.length> 100000) return;
-		setTimeout(function(){
-	   		window.scrollTo(0,scrolly);
-	   		setTimeout(function(){
-		   		fun1(scrolly + 10000 );
-		   		},randomWait());
-	   		},10);
-	   	return;
-	   	}
+   if(idx>=array.length) {
+   	if(all_seen.length> 1000) return;
+   	window.scrollTo(0,scrolly);
+   	setTimeout(function(){
+   		fun1(scrolly + 1 + 2*window.innerHeight );
+   		},30*1000);
+   	return;
+   	}
    var s=array[idx];
-   
+   console.log(""+(idx+1)+"/"+array.length+" "+s+ " y="+scrolly+" all_seen:"+all_seen.length);
+
    var win = window.open("https://www.instagram.com"+s,s);
    win.addEventListener('load', function() {
 	  var iter2= win.document.evaluate(
