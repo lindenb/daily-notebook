@@ -1,6 +1,7 @@
 SHELL=/bin/bash
 config_dir=$(dir $(lastword $(MAKEFILE_LIST)))
 maven_dir?=$(config_dir)../maven
+package_dir?=$(config_dir)../packages
 
 
 ifneq ($(realpath $(config_dir)local.mk),)
@@ -21,10 +22,13 @@ define space2colon
 $(subst $(SPACE),:,$(1))
 endef
 
+top:
+	echo "Default target"
+
 quartz_jars=$(addprefix $(maven_dir)/quartz-2.2.3/lib/,$(addsuffix .jar,c3p0-0.9.1.1 slf4j-log4j12-1.7.7 quartz-2.2.3 slf4j-api-1.7.7 log4j-1.2.16 quartz-jobs-2.2.3 quartz-2.2.3)) 
 
 
-$(addprefix $(maven_dir)/quartz-2.2.3/lib/,$(addsuffix .jar,c3p0-0.9.1.1 slf4j-log4j12-1.7.7 quartz-2.2.3 slf4j-api-1.7.7 log4j-1.2.16 quartz-jobs-2.2.3)) : $(maven_dir)/quartz-2.2.3/lib/quartz-2.2.3.jar
+$(addprefix $(maven_dir)/quartz-2.2.3/lib/,$(addsuffix .jar,c3p0-0.9.1.1 slf4j-log4j12-1.7.7 slf4j-api-1.7.7 log4j-1.2.16 quartz-jobs-2.2.3)) : $(maven_dir)/quartz-2.2.3/lib/quartz-2.2.3.jar
 	touch -c $@
 
 $(maven_dir)/quartz-2.2.3/lib/quartz-2.2.3.jar :
@@ -35,3 +39,7 @@ $(maven_dir)/quartz-2.2.3/lib/quartz-2.2.3.jar :
 	touch -c $@
 
 htslib_dir?=${HOME}/package/htslib
+
+$(package_dir)/cromwell.jar:
+	mkdir -p $(dir $@)
+	wget -O "$@" "https://github.com/broadinstitute/cromwell/releases/download/31/cromwell-31.jar"

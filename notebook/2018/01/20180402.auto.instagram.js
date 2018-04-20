@@ -7,9 +7,14 @@ faire apparaitre un tag eg. https://www.instagram.com/explore/tags/drawing/ avan
 
 
 */
+
+var all_seen_array = [];
+
 function randomWait() {
    return (5 + Math.floor(Math.random() * 10)) * 1000;
 }
+
+
 
 function docHrefs(doc) {
   var array=[];
@@ -22,8 +27,11 @@ function docHrefs(doc) {
    if(att==null || 
      !att.value.startsWith("/p/") ||
      !att.value.includes("/?tagged=") ||
-     array.includes(att.value)) continue;
+     array.includes(att.value) ||
+     all_seen_array.includes(att.value)
+     ) continue;
     array.push(att.value);
+    all_seen_array.push(att.value);
     }
   return array;
   }
@@ -33,13 +41,19 @@ function fun1(scrolly) {
 var posts_on_page= docHrefs(document);
 
 function showig(array,idx) {
-   if(idx>=array.length) {
-   	window.scrollTo(0,scrolly);
-   	fun1(scrolly + 10000 );
-   	return;
-   	}
+    console.log(""+(idx+1)+"/"+array.length+" y="+scrolly);
+    if(idx>=array.length) {
+		if(all_seen_array.length> 100000) return;
+		setTimeout(function(){
+	   		window.scrollTo(0,scrolly);
+	   		setTimeout(function(){
+		   		fun1(scrolly + 10000 );
+		   		},randomWait());
+	   		},10);
+	   	return;
+	   	}
    var s=array[idx];
-   console.log(""+(idx+1)+"/"+array.length+" "+s+ " y="+scrolly);
+   
    var win = window.open("https://www.instagram.com"+s,s);
    win.addEventListener('load', function() {
 	  var iter2= win.document.evaluate(

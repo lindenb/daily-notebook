@@ -1,0 +1,11 @@
+#
+# in ~/.nanorc:
+# include ~/.nano/syntax/wdl.nanorc
+#
+syntax "cromwell" "\.wdl$"
+color blue "[A-Za-z_][A-Za-z_0-9]*"
+color yellow "(task|workflow|call|command|runtime|output|scatter|if|then|else|import)"
+color red "(String|File|Boolean|Int|Float|Uri|Map|Array)"
+color green "\"[^\"]*\""
+color green "'[^']*'"
+color brightblue start="##" end="\*\*"
