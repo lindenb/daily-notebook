@@ -8,13 +8,11 @@ faire apparaitre un tag eg. https://www.instagram.com/explore/tags/drawing/ avan
 
 */
 
-var all_seen_array = [];
+var all_seen = [];
 
 function randomWait() {
    return (5 + Math.floor(Math.random() * 10)) * 1000;
 }
-
-
 
 function docHrefs(doc) {
   var array=[];
@@ -40,7 +38,6 @@ function fun1(scrolly) {
 var posts_on_page= docHrefs(document);
 
 function showig(array,idx) {
-    console.log(""+(idx+1)+"/"+array.length+" y="+scrolly);
    if(idx>=array.length) {
    	if(all_seen.length> 1000) return;
    	window.scrollTo(0,scrolly);
@@ -51,7 +48,6 @@ function showig(array,idx) {
    	}
    var s=array[idx];
    console.log(""+(idx+1)+"/"+array.length+" "+s+ " y="+scrolly+" all_seen:"+all_seen.length);
-
    var win = window.open("https://www.instagram.com"+s,s);
    win.addEventListener('load', function() {
 	  var iter2= win.document.evaluate(
