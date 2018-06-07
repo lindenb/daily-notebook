@@ -51,7 +51,7 @@ function showig(array,idx) {
    var win = window.open("https://www.instagram.com"+s,s);
    win.addEventListener('load', function() {
 	  var iter2= win.document.evaluate(
-		"//span[name(..) = 'A' and contains(@class,'coreSpriteHeartOpen')]",
+		"//SPAN[name(..)='A' and text()='Like' and ../@role='button']",
 		win.document
 		,null,
 		XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
@@ -60,6 +60,7 @@ function showig(array,idx) {
           
           if(span!=null)
             {
+            console.log("GO IT");
             setTimeout(function(){
               span.parentNode.click();
                 setTimeout(function(){
@@ -70,6 +71,7 @@ function showig(array,idx) {
             }
           else
             {
+            console.log("NO GO IT");
             setTimeout(function(){
                 win.close();
                 showig(array,idx+1);
