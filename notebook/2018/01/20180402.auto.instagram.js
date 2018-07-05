@@ -39,7 +39,7 @@ var posts_on_page= docHrefs(document);
 
 function showig(array,idx) {
    if(idx>=array.length) {
-   	if(all_seen.length> 1000) return;
+   	if(all_seen.length> 100000) return;
    	window.scrollTo(0,scrolly);
    	setTimeout(function(){
    		fun1(scrolly + 1 + 2*window.innerHeight );
@@ -51,7 +51,8 @@ function showig(array,idx) {
    var win = window.open("https://www.instagram.com"+s,s);
    win.addEventListener('load', function() {
 	  var iter2= win.document.evaluate(
-		"//SPAN[name(..)='A' and text()='Like' and ../@role='button']",
+		 // "//SPAN[name(..)='A' and text()='Like' and ../@role='button']",
+		 "//SPAN[name(..)='BUTTON' and text()='Like']",
 		win.document
 		,null,
 		XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
