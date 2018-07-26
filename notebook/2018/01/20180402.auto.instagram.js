@@ -52,7 +52,8 @@ function showig(array,idx) {
    win.addEventListener('load', function() {
 	  var iter2= win.document.evaluate(
 		 // "//SPAN[name(..)='A' and text()='Like' and ../@role='button']",
-		 "//SPAN[name(..)='BUTTON' and text()='Like']",
+		 //"//SPAN[name(..)='BUTTON' and text()='Like']",
+		 "//SPAN[name(..)='BUTTON' and @aria-label='Like']",
 		win.document
 		,null,
 		XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
