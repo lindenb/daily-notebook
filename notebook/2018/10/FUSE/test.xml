@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<directory>
+	<directory name="testdata">
+		<file name="file1.txt" url="http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/current.tree"/>
+		<file name="file2.txt" url="http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/current.tree"/>
+	</directory>
+</directory>
