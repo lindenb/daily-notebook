@@ -2,6 +2,7 @@
 <directory>
 	<directory name="testdata">
 		<file name="file1.txt" url="http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/current.tree"/>
-		<file name="aligned_reads.bam" url="http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/integrated_sv_map/supporting/CHM1/pacbio/data/aligned_reads.bam"/>
+		<file url="http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/data/NA21099/alignment/NA21099.unmapped.ILLUMINA.bwa.GIH.low_coverage.20120522.bam"/>
+		<file url="http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/data/NA21099/alignment/NA21099.unmapped.ILLUMINA.bwa.GIH.low_coverage.20120522.bam.bai"/>
 	</directory>
 </directory>

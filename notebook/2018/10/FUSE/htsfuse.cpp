@@ -18,28 +18,6 @@ using namespace std;
 #endif
 
 FSNode::FSNode(xmlDocPtr dom,xmlNodePtr root,FSNode* parent):parent(parent),user(0),password(0) {
-    if(parent==0)
-    	{
-    	if(::xmlHasProp(root, BAD_CAST "name")!=NULL)
-    		{
-    		LOG("[WARN]@name ignored in root node.");
-    		}
-    	this->path.assign("/");
-    	}
-    else
-    	{
-    	this->path.assign(parent->path);
-    	
-	 xmlChar *s = ::xmlGetProp(root, BAD_CAST "name");
-	 if(s==NULL) {
-		LOG("[FATAL]@name is missing in <" << (const char*)root->name << ">");
-		abort();
-	    	}
-	    this->token.assign((char*)s);
-	    ::xmlFree(s);
-	    if(parent!=0 && parent->parent!=0) this->path.append("/");
-	    this->path.append(token);
-    	}
     this->user =  ::xmlGetProp(root, BAD_CAST "user");
     this->password =  ::xmlGetProp(root, BAD_CAST "password");
     }
@@ -59,6 +37,30 @@ FSDirectory::FSDirectory(xmlDocPtr dom,xmlNodePtr root,FSNode* parent):FSNode(do
 		fprintf(stderr,"[FATAL] Not directory <%s>.\n",(const char*)root->name);
 		abort();
 		}
+		
+	 if(parent==0)
+	    	{
+	    	if(::xmlHasProp(root, BAD_CAST "name")!=NULL)
+	    		{
+	    		LOG("[WARN]@name ignored in root node.");
+	    		}
+	    	this->path.assign("/");
+	    	}
+	    else
+	    	{
+	    	this->path.assign(parent->path);
+	    	
+		 xmlChar *s = ::xmlGetProp(root, BAD_CAST "name");
+		 if(s==NULL) {
+			LOG("[FATAL]@name is missing in <" << (const char*)root->name << ">");
+			abort();
+		    	}
+		    this->token.assign((char*)s);
+		    ::xmlFree(s);
+		    if(parent!=0 && parent->parent!=0) this->path.append("/");
+		    this->path.append(token);
+	    	}
+		
 	xmlNodePtr cur_node;
 	for (cur_node = xmlFirstElementChild(root); cur_node!=NULL; cur_node = xmlNextElementSibling(cur_node)) {
 		if(strcmp((const char*)cur_node->name,"directory")==0) {
@@ -133,6 +135,30 @@ FSFile::FSFile(xmlDocPtr dom,xmlNodePtr root,FSNode* parent):FSNode(dom,root,par
 	    	}
 	 this->url.assign((char*)s);
 	 ::xmlFree(s);
+	 
+
+	  
+	 s = ::xmlGetProp(root, BAD_CAST "name");
+	 if(s!=NULL) {
+	    this->token.assign((char*)s);
+	    ::xmlFree(s);
+	    }
+	 else
+	 	{
+	 	string::size_type n= this->url.find_last_of('/');
+	 	if(n==string::npos || n+1==this->url.size())
+	 		{
+	 		LOG("[FATAL]@name is missing in" << (const char*)root->name << "> and I cannot find '/' in url \n");
+			abort();
+	 		}
+	 	this->token.assign(this->url.substr(n+1));
+	 	}
+
+	 this->path.assign(parent->path);
+	 if(parent!=0 && parent->parent!=0) this->path.append("/");
+	 this->path.append(token);
+	 
+	 
 	}
 		
 bool FSFile::is_file() { return true;}
@@ -209,6 +235,7 @@ int FSFile::getattr(struct stat *stbuf) {
 	stbuf->st_mode = S_IFREG | 0444;
 	stbuf->st_nlink = 1;
 	stbuf->st_size = this->length();
+	LOG(path << "size: "<< stbuf->st_size);
 	return 0;
 	}
 
@@ -260,6 +287,7 @@ CURL* FSFile::create_curl() {
 	}
 
 int FSFile::read(char *buffer, size_t size, off_t offset) {
+	DEBUG("reading " << path << " length=" << this->length());
 	 if(offset+size> this->length())
 	 	{
 	 	size = this->length()-offset;
