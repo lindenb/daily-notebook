@@ -12,7 +12,7 @@
 #include <cerrno>
 #include <curl/curl.h> 
 #ifndef FUSE_USE_VERSION
-#define FUSE_USE_VERSION 26
+#define FUSE_USE_VERSION 31
 #endif
 #include <fuse.h>
 #include <libxml/parser.h>

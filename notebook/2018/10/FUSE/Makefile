@@ -7,16 +7,13 @@ all: htsfuse
 	-rmdir tmp_fuse
 	mkdir -p tmp_fuse
 	chmod a+xw tmp_fuse
-	./htsfuse test.xml ${PWD}/tmp_fuse
-	tail -1 /etc/mtab
-	echo "done"
+	./htsfuse test.xml -d ${PWD}/tmp_fuse 
 	ls tmp_fuse
-	fusermount -u tmp_fuse
-	rmdir tmp_fuse
-
+	
 htsfuse : htsfuse.cpp htsfuse.hpp
-	g++ -o $@ $(CFLAGS)   $< $(LIBS)
+	g++ -o $@ $(CFLAGS) $< $(LIBS)
 
 clean:
+	-fusermount -u tmp_fuse
 	-rmdir  tmp_fuse
 	rm -f htsfuse

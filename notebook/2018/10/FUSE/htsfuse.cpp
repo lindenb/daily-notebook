@@ -1,17 +1,28 @@
+#include <iostream>
 #include "htsfuse.hpp"
 
 // http://www.maastaar.net/fuse/linux/filesystem/c/2016/05/21/writing-a-simple-filesystem-using-fuse/
 //https://github.com/Labs22/BlackServerOS/blob/8a6191f732d97e34adba5f2da343fed6f02a56a3/cryptography/android-fde-master/android-fde-master/read_emmc/usb.cpp
 //https://github.com/cordalace/ffmc/blob/077af9bc9c43443e82255194b634ea2bcb0d9a75/main.c
+// http://www-numi.fnal.gov/offline_software/srt_public_context/WebDocs/Errors/unix_system_errors.html
 using namespace std;
 
+#define ROOT_NODE ((FSDirectory*) fuse_get_context()->private_data)
+
+#define LOG(a) do { std::cerr << "[HTSFUSE]"<< __FUNCTION__<< "[" << __LINE__ << "]:" << a << std::endl;} while(0)
+
+#ifndef NDEBUG
+#define DEBUG(a) LOG(a)
+#else
+#define DEBUG(a) do {  } while(0)
+#endif
 
 FSNode::FSNode(xmlDocPtr dom,xmlNodePtr root,FSNode* parent):parent(parent),user(0),password(0) {
     if(parent==0)
     	{
     	if(::xmlHasProp(root, BAD_CAST "name")!=NULL)
     		{
-    		fprintf(stderr,"[WARN]@name ignored in root node.\n");
+    		LOG("[WARN]@name ignored in root node.");
     		}
     	this->path.assign("/");
     	}
@@ -21,12 +32,12 @@ FSNode::FSNode(xmlDocPtr dom,xmlNodePtr root,FSNode* parent):parent(parent),user
     	
 	 xmlChar *s = ::xmlGetProp(root, BAD_CAST "name");
 	 if(s==NULL) {
-		fprintf(stderr,"[FATAL]@name is missing in <%s>.\n", (const char*)root->name);
+		LOG("[FATAL]@name is missing in <" << (const char*)root->name << ">");
 		abort();
 	    	}
 	    this->token.assign((char*)s);
 	    ::xmlFree(s);
-	    this->path.append("/");
+	    if(parent!=0 && parent->parent!=0) this->path.append("/");
 	    this->path.append(token);
     	}
     this->user =  ::xmlGetProp(root, BAD_CAST "user");
@@ -75,10 +86,17 @@ FSDirectory::~FSDirectory() {
 	}
 
 FSNode* FSDirectory::find(const char* pathstr) {
-	if(this->path.compare(pathstr)==0) return this;
+	DEBUG("searching \"" << pathstr << "\" current is :" << this->path);
+	if(this->path.compare(pathstr)==0) {
+		DEBUG("found " << pathstr);
+		return this;
+		}
+	
 	for(size_t i=0;i< children.size();++i) {
 		FSNode* n = children[i]->find(pathstr);
-		if(n!=0) return n;
+		if(n!=0) {
+			return n;
+			}
 		}
 	return 0;
 	}
@@ -92,6 +110,7 @@ int FSDirectory::readdir(void *buffer, fuse_fill_dir_t filler) {
 		}
 	return 0;
 	}
+
 int FSDirectory::getattr(struct stat *stbuf) {
 	std::memset(stbuf, 0, sizeof(struct stat));
 	stbuf->st_mode = S_IFDIR | 0755;
@@ -102,14 +121,14 @@ int FSDirectory::getattr(struct stat *stbuf) {
 	
 FSFile::FSFile(xmlDocPtr dom,xmlNodePtr root,FSNode* parent):FSNode(dom,root,parent),content_length_ptr(0) {
 	if(strcmp((char*)root->name,"file")!=0) {
-		fprintf(stderr,"[FATAL] Not file <%s>.\n",(const char*)root->name);
+		LOG("[FATAL] Not file <" << (const char*)root->name << ">.\n");
 		abort();
 		}
 	 xmlChar *s = ::xmlGetProp(root, BAD_CAST "url");
 	 if(s==NULL) s= ::xmlGetProp(root, BAD_CAST "href");
 	 if(s==NULL) s= ::xmlGetProp(root, BAD_CAST "src");
 	 if(s==NULL) {
-		fprintf(stderr,"[FATAL]@url is missing in <%s>.\n", (const char*)root->name);
+	 	LOG("[FATAL]@url is missing in" << (const char*)root->name << ">.\n");
 		abort();
 	    	}
 	 this->url.assign((char*)s);
@@ -125,7 +144,7 @@ if(content_length_ptr!=NULL) delete content_length_ptr;
 
 size_t read_content_callback(char *buffer,   size_t size,   size_t nitems,   void *userdata) {
 	std::string* content=(string*)userdata;
-	content->append(buffer,size*nitems * size);
+	content->append(buffer,size*nitems);
 	return nitems * size;
 	}
 
@@ -134,38 +153,41 @@ size_t FSFile::length() {
 	if(content_length_ptr==NULL) {
 		 string header;
 		 CURL* curl = this->create_curl();
-		 curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
-		 curl_easy_setopt(curl, CURLOPT_HEADER, 0L);
-		 
-		 curl_easy_setopt(curl, CURLOPT_HEADERDATA, &header);
-		 curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, read_content_callback);
-		
-		  CURLcode res = curl_easy_perform(curl);
-		 /* Check for errors */
-		 if(res != CURLE_OK) {
-		  	fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-		 	}
-		 else
+		 if(curl!=0)
 		 	{
-		 	std::istringstream iss(header);
-		 	std::string line;
-		 	std::string content_length_token("Content-Length:");
-			while (std::getline(iss, line))
-				{
-				if(line.find(content_length_token)==0)
+			 curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
+			 curl_easy_setopt(curl, CURLOPT_HEADER, 0L);
+			 
+			 curl_easy_setopt(curl, CURLOPT_HEADERDATA, &header);
+			 curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, read_content_callback);
+		
+			  CURLcode res = curl_easy_perform(curl);
+			 /* Check for errors */
+			 if(res != CURLE_OK) {
+			 	LOG("curl_easy_perform() failed " << curl_easy_strerror(res));
+			 	}
+			 else
+			 	{
+			 	std::istringstream iss(header);
+			 	std::string line;
+			 	std::string content_length_token("Content-Length:");
+				while (std::getline(iss, line))
 					{
-					line.erase(0,content_length_token.size());
-					long content_length= strtoul(line.c_str(),NULL,10);
-					content_length_ptr = new  size_t;
-					*content_length_ptr = content_length;
-					break;
+					if(line.find(content_length_token)==0)
+						{
+						line.erase(0,content_length_token.size());
+						long content_length= strtoul(line.c_str(),NULL,10);
+						content_length_ptr = new  size_t;
+						*content_length_ptr = content_length;
+						break;
+						}
 					}
-				}
-		 	}
-		curl_easy_cleanup(curl);
+			 	}
+			curl_easy_cleanup(curl);
+			}
 		
 		if(content_length_ptr==NULL) {
-			fprintf(stderr, "Cannot get length %s\n", url.c_str());
+			LOG("Cannot get length for " <<  url.c_str());
 			content_length_ptr = new  size_t;
 			*content_length_ptr = 0UL;
 			}
@@ -179,8 +201,8 @@ FSNode* FSFile::find(const char* pathstr) {
 	}
 
 int FSFile::readdir(void *buffer, fuse_fill_dir_t filler) {
-	fprintf(stderr,"[LOG]readdir asked for file.\n");
-	return 0;
+	LOG("[LOG]readdir asked for file "<< path);
+	return -ENOTDIR;
 	}
 
 int FSFile::getattr(struct stat *stbuf) {
@@ -204,17 +226,18 @@ CURL* FSFile::create_curl() {
 	 CURL *curl = ::curl_easy_init();
 	 if(curl==NULL) {
 		fprintf(stderr,"[ERROR]::curl_easy_init failed\n");
-		abort();
+		return NULL;
 		}
 	 
-	 curl_easy_setopt(curl, CURLOPT_URL, this->url.c_str());
+	 ::curl_easy_setopt(curl, CURLOPT_URL, this->url.c_str());
 	 
 	 FSNode* curr=this;
 	 while(curr!=NULL)
 	 	{
 	 	if(curr->user!=NULL)
 	 		{
-			curl_easy_setopt(curl, CURLOPT_USERNAME,(const char*)curr->user);
+	 		
+			::curl_easy_setopt(curl, CURLOPT_USERNAME,(const char*)curr->user);
 			break;
 			}
 		curr = curr->parent;
@@ -237,7 +260,6 @@ CURL* FSFile::create_curl() {
 	}
 
 int FSFile::read(char *buffer, size_t size, off_t offset) {
-	 
 	 if(offset+size> this->length())
 	 	{
 	 	size = this->length()-offset;
@@ -245,35 +267,36 @@ int FSFile::read(char *buffer, size_t size, off_t offset) {
 	 if(size==0UL) return 0;
 	 
 	 CURL* curl = this->create_curl();
+	 if(curl==0) return -1; 
 	 curl_easy_setopt(curl, CURLOPT_NOBODY, 0L);
 	 curl_easy_setopt(curl, CURLOPT_HEADER, 0L);
 	 string content;
-	 curl_easy_setopt(curl, CURLOPT_HEADERDATA, &content);
+	 curl_easy_setopt(curl, CURLOPT_WRITEDATA, &content);
 	 curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, read_content_callback);
 	 //curl_easy_setopt(curl, CURLOPT_BUFFERSIZE, CURL_MAX_READ_SIZE );
-
 	 char tmp_range[1000];
-	 sprintf(tmp_range,"%lld-%lld",offset,offset+size);
-	 
+	 sprintf(tmp_range,"%lld-%lld",offset,offset+(size-1));
 	 curl_easy_setopt(curl, CURLOPT_RANGE, tmp_range);
-	 
 	  CURLcode res = curl_easy_perform(curl);
-	 /* Check for errors */
+	  /* Check for errors */
 	 if(res != CURLE_OK) {
-	  	fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+	  	DEBUG("curl_easy_perform() failed: " << curl_easy_strerror(res));
+	  	::curl_easy_cleanup(curl);
+	  	return -EIO;
 	 	}
 	 curl_easy_cleanup(curl);
+	 if(size>(int)content.size()) size=(int)content.size();
 	 memcpy(buffer,content.data(),size);
-	return 0;
+	return size;
 	}
 
-static FSDirectory* fs_root = NULL;
+
 
 static int htsfuse_getattr(const char *path, struct stat *stbuf) {
-fprintf(stderr,"call htsfuse_getattr\n");
-FSNode* node = fs_root->find(path);
+  DEBUG(path);
+  FSNode* node = ROOT_NODE->find(path);
   if(node==NULL) {
-  	fprintf(stderr,"File not found %s\n",path);
+  	DEBUG("File not found " << path);
   	return -ENOENT;
 	}
   node->getattr(stbuf);
@@ -281,10 +304,10 @@ FSNode* node = fs_root->find(path);
 }
 
 static int htsfuse_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset, fuse_file_info *fi) {
-   fprintf(stderr,"call htsfuse_readdir\n");
-  FSNode* node = fs_root->find(path);
+  DEBUG(path);
+  FSNode* node = ROOT_NODE->find(path);
   if(node==NULL) {
-  	fprintf(stderr,"File not found %s\n",path);
+  	DEBUG("File not found " << path);
   	return -ENOENT;
 	}
   node->readdir(buffer,filler);
@@ -294,36 +317,37 @@ static int htsfuse_readdir(const char *path, void *buffer, fuse_fill_dir_t fille
 
 
 static int htsfuse_open(const char *path,struct fuse_file_info *fi) {
-   fprintf(stderr,"call htsfuse_open\n");
-  FSNode* node = fs_root->find(path);
-  if(node==NULL || !node->is_file()) return -ENOENT;
-
+  DEBUG(path);
+  FSNode* node = ROOT_NODE->find(path);
+  if(node==NULL || !node->is_file()) {
+  	DEBUG("File not found " << path);
+  	return -ENOENT;
+	}
   fi->fh = (uint64_t) new FSFileReader((FSFile*)node);
-
   return 0;
 }
 
 static int htsfuse_release(const char *path,struct fuse_file_info *fi) {
-  fprintf(stderr,"call htsfuse_release\n");
+  DEBUG(path);
   FSFileReader* r = (FSFileReader*)fi->fh;
-  delete r;
+  if(r!=0) delete r;
   return 0;
 }
 
 static int htsfuse_read(const char *path, char *buffer, size_t size, off_t offset,struct fuse_file_info *fi) {
+  DEBUG(path);
   FSFileReader* r = (FSFileReader*)fi->fh;
-  fprintf(stderr,"call htsfuse_read\n");
+  if(r==0) {
+  	DEBUG("pointer is null for " << path << "??");
+  	return -1;
+  	}
   return r->fsFile->read(buffer,size,offset);
 }
 
 
-void _onexit(void) {
-	fprintf(stderr,"AT EXIT CALLED########################\n");
-	
-	}
-
 int main(int argc,char** argv)
 	{
+	int ret=0;
 	LIBXML_TEST_VERSION
 	 curl_global_init(CURL_GLOBAL_ALL);
 	if(argc<3) {
@@ -336,22 +360,23 @@ int main(int argc,char** argv)
        		fprintf(stderr,"error: could not parse XML file %s\n", argv[1]);
        		return EXIT_FAILURE;
     		}
-    	fs_root = new FSDirectory(doc,xmlDocGetRootElement(doc),0);
+    	FSDirectory* fs_root = new FSDirectory(doc,xmlDocGetRootElement(doc),0);
     	
 	::xmlFreeDoc(doc);
 	::xmlCleanupParser();
 	
+	
 	struct fuse_operations operations;
+	memset((void*)&operations,0,sizeof(struct fuse_operations));
 	operations.open = htsfuse_open;
 	operations.read = htsfuse_read;
 	operations.release = htsfuse_release;
 	operations.readdir = htsfuse_readdir;
 	operations.getattr = htsfuse_getattr;
-	atexit(_onexit);
-	fprintf(stderr, "######################fuse_main start\n");
-	int ret= fuse_main( argc-1, &argv[1], &operations,NULL );
-	fprintf(stderr, "######################fuse_main returned %d\n", ret);
-	//delete fs_root;
 	
+	{
+	ret= fuse_main( argc-1, &argv[1], &operations,fs_root );
+	//delete fs_root;
+	}
 	return ret;
 	}
