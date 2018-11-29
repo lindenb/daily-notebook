@@ -24,7 +24,6 @@ function docHrefs(doc) {
 
    if(att==null || 
      !att.value.startsWith("/p/") ||
-     !att.value.includes("/?tagged=") ||
      all_seen.includes(att.value) ||
      array.includes(att.value)) continue;
     array.push(att.value);

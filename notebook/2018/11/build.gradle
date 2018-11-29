@@ -1,0 +1,165 @@
+plugins {
+    id "java"
+}
+
+
+apply plugin: 'java'
+
+// https://docs.gradle.org/current/userguide/managing_dependency_configurations.html
+configurations {
+    jvarkit1
+}
+ 
+repositories {
+   mavenCentral()
+}
+
+final String htsjdk_version = "2.18.0"
+
+dependencies {
+	jvarkit1 group: 'com.github.samtools', name: 'htsjdk', version: htsjdk_version
+}
+ 
+ def getGitHash = { ->
+    try {
+    def stdout = new java.io.ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'rev-parse', '--short', 'HEAD'
+        standardOutput = stdout
+    }
+    return stdout.toString().trim()
+    } catch(Exception err) {
+	return err.getMessage()
+	}
+}
+
+class JvarkitCompile  implements Plugin<Project> {
+	void apply(Project project){
+	  	project.apply(plugin:'java-base')
+	 	}
+	}
+
+class Biostar extends DefaultTask
+	{
+	String date =  '2018'
+	
+
+	@TaskAction
+	def zob() {
+		ant.echo(message: "Biostar##########" + date);
+		ant.mkdir(dir : "src/main/java")
+		ant.echo(message: "public class Main"+date+"{public static void main(final String args[]) {System.err.println(\"Hello World\");}}", file: "src/main/java/Main"+date+".java");
+		}
+	}
+
+task hello2(type :  Biostar) {
+	date = '2019'
+	}
+task hello3(type :  Biostar) {
+	date = '2020'
+	}
+
+task hello4(type :  Biostar) {
+	date = '2021'
+	finalizedBy hello3
+	}
+
+
+task beforeHello {
+	description 'run before hello'
+	println "In Before Hello"
+	}
+
+task hello (dependsOn: 'beforeHello') {
+   doLast {
+      String str = "tutorial"
+      for(int i=0;i< 3;i++)
+	{
+        println str + i;
+	}
+     println ""+getProject().getBuildDir() + getGitHash()
+   }
+}
+
+class JvarkitApp
+	{
+	final String name;
+	final String mainClass;
+	String sourceCompatibility = "1.8"
+	String targetCompatibility = "1.8"
+	def configurations = new HashSet<>();
+	
+	JvarkitApp(final String name)
+		{
+		this.name = name;
+		configurations.add("jvarkit1")
+		}
+	}
+
+class BiostarApp extends JvarkitApp
+	{
+	BiostarApp(int x)
+		{
+		super("biostar"+x);
+		}
+	}
+
+final List<JvarkitApp> apps = new ArrayList<>();
+apps.add(new JvarkitApp("myapp1"));
+apps.add(new BiostarApp(33));
+
+for(final JvarkitApp app: apps) {
+	
+
+	Task t0 = tasks.create(name: app.name, type: Biostar) {
+	    date = app.name
+	    group = "JVARKIT"
+	    description = "description for "+app.name
+	    }
+	
+	
+	Task t1 =  tasks.create(name: app.name+"x", type: Biostar) {
+		date =app.name
+		}
+	
+	t1.dependsOn t0
+	
+	Task t2 =  tasks.create(name: app.name+"j", type:  JavaCompile) {
+		description = "compile "+app.name
+		
+		source = [ fileTree(dir: '.', include:"src/main/java/Main"+app.name+".java")]
+		destinationDir = file("src/main/java")
+		classpath = files("src/main/java") 
+		app.configurations.each{ classpath += configurations[it]}
+		
+		dependencyCacheDir = file(".")
+		sourceCompatibility = app.sourceCompatibility
+		targetCompatibility = app.targetCompatibility
+		options.encoding = 'UTF-8'
+		options.listFiles = true
+		options.debug = true
+		options.warnings = true
+		options.deprecation  = true
+		options.sourcepath = files("src/main/java")
+		
+		doFirst {
+			ant.echo(message:"#Compiling "+app.name)
+			}
+		}
+	
+	t2.dependsOn t1
+	
+	Task t3 = tasks.create(name: app.name+"p",type: Jar) {
+		manifest {
+			attributes 'Implementation-Title': 'Gradle Jar File Example',  
+				'Implementation-Version': "1.0",
+				'Main-Class': 'com.mkyong.DateUtils'
+		    	}
+		 baseName = app.name + '-all'
+		 from {  zipTree(file("src/main/java"))  }
+		 with jar
+		}
+	
+	t3.dependsOn t2
+	}
+println tasks.getByPath('hello').path
