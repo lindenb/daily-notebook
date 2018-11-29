@@ -5,6 +5,9 @@ plugins {
 
 apply plugin: 'java'
 
+
+
+
 // https://docs.gradle.org/current/userguide/managing_dependency_configurations.html
 configurations {
     jvarkit1
@@ -18,9 +21,15 @@ final String htsjdk_version = "2.18.0"
 
 dependencies {
 	jvarkit1 group: 'com.github.samtools', name: 'htsjdk', version: htsjdk_version
+	jvarkit1 group: 'com.beust', name: 'jcommander', version: '1.72'
 }
  
- def getGitHash = { ->
+@groovy.transform.Field
+String jvarkitDir = "/home/lindenb/src/jvarkit-git" 
+@groovy.transform.Field
+String jvarkitPackage =  "com.github.lindenb.jvarkit" 
+ 
+def getGitHash = { ->
     try {
     def stdout = new java.io.ByteArrayOutputStream()
     exec {
@@ -33,105 +42,109 @@ dependencies {
 	}
 }
 
-class JvarkitCompile  implements Plugin<Project> {
-	void apply(Project project){
-	  	project.apply(plugin:'java-base')
-	 	}
-	}
-
-class Biostar extends DefaultTask
-	{
-	String date =  '2018'
-	
-
-	@TaskAction
-	def zob() {
-		ant.echo(message: "Biostar##########" + date);
-		ant.mkdir(dir : "src/main/java")
-		ant.echo(message: "public class Main"+date+"{public static void main(final String args[]) {System.err.println(\"Hello World\");}}", file: "src/main/java/Main"+date+".java");
-		}
-	}
-
-task hello2(type :  Biostar) {
-	date = '2019'
-	}
-task hello3(type :  Biostar) {
-	date = '2020'
-	}
-
-task hello4(type :  Biostar) {
-	date = '2021'
-	finalizedBy hello3
-	}
-
-
-task beforeHello {
-	description 'run before hello'
-	println "In Before Hello"
-	}
-
-task hello (dependsOn: 'beforeHello') {
-   doLast {
-      String str = "tutorial"
-      for(int i=0;i< 3;i++)
-	{
-        println str + i;
-	}
-     println ""+getProject().getBuildDir() + getGitHash()
-   }
-}
 
 class JvarkitApp
 	{
+	final def proj;
 	final String name;
-	final String mainClass;
+	String mainClass ="";
 	String sourceCompatibility = "1.8"
 	String targetCompatibility = "1.8"
 	def configurations = new HashSet<>();
 	
-	JvarkitApp(final String name)
+	JvarkitApp(final def proj,final String name,final String mainClass)
 		{
+		this.proj = proj;
 		this.name = name;
+		this.mainClass =  mainClass;
 		configurations.add("jvarkit1")
 		}
+	String getMainClass() {
+		return mainClass;
+		}
+	String getMainSource() {
+		String s = getMainClass();
+		int dollar = s.indexOf('$');
+		if(dollar!=-1) s=s.substring(0,dollar);
+		return mainClass.replace('.','/')+".java";
+		}
+	
+	def getMainSourceFile() {
+		return proj.jvarkitDir+"/src/main/java/"+getMainSource();
+		}
+	def getTestSourceFile() {
+		return proj.jvarkitDir+"/src/test/java/"+getMainSource();
+		}
+	
 	}
+
+
 
 class BiostarApp extends JvarkitApp
 	{
-	BiostarApp(int x)
+	BiostarApp(def owner,int x)
 		{
-		super("biostar"+x);
+		super(owner, "biostar"+x ,   owner.jvarkitPackage +".tools.biostar.Biostar"+x );
 		}
 	}
 
+
 final List<JvarkitApp> apps = new ArrayList<>();
-apps.add(new JvarkitApp("myapp1"));
-apps.add(new BiostarApp(33));
+apps.add(new JvarkitApp(this,"vcfhead","${jvarkitPackage}.tools.misc.VcfHead"));
+apps.add(new BiostarApp(this,33));
+
+System.err.println("#A");
+
+Task compile_annotproc =  tasks.create(name: "annotproc.compile", type:  JavaCompile) {
+	description = "compile Annotation processor"
+	
+	source = [ file("${jvarkitDir}/src/main/java/com/github/lindenb/jvarkit/annotproc/JVarkitAnnotationProcessor.java")]
+	destinationDir = file("${projectDir}/tmp1")
+	classpath = files("${jvarkitDir}/src/main/java") 
+	dependencyCacheDir = file(".")
+	sourceCompatibility = "1.8"
+	targetCompatibility = "1.8"
+	options.encoding = 'UTF-8'
+	options.listFiles = true
+	options.debug = true
+	options.warnings = true
+	options.deprecation  = true
+	options.sourcepath = files("${jvarkitDir}/src/main/java")
+	
+	doFirst {
+		ant.mkdir(dir : "${projectDir}/tmp1/META-INF/services");
+		ant.echo(message: "com.github.lindenb.jvarkit.annotproc.JVarkitAnnotationProcessor", file:"${projectDir}/tmp1/META-INF/services/javax.annotation.processing.Processor");
+		}
+	
+	}
+
+Task jar_annotproc =  tasks.create(name: "annotproc.jar", type:  Jar) {
+		description = "package annotproc"
+		destinationDir = file("${projectDir}/dist")
+		archiveName = "annotproc.jar"
+		from { file("${projectDir}/tmp1") }
+		with jar
+		doFirst {
+			ant.mkdir(dir : "${projectDir}/dist");
+			ant.echo (message : "PROJECT DIR IS ${projectDir}");
+			}
+		doLast {
+			ant.delete(dir : "${projectDir}/tmp1" , verbose : true)
+			}
+	}
+
+jar_annotproc.dependsOn compile_annotproc
 
 for(final JvarkitApp app: apps) {
 	
-
-	Task t0 = tasks.create(name: app.name, type: Biostar) {
-	    date = app.name
-	    group = "JVARKIT"
-	    description = "description for "+app.name
-	    }
 	
-	
-	Task t1 =  tasks.create(name: app.name+"x", type: Biostar) {
-		date =app.name
-		}
-	
-	t1.dependsOn t0
-	
-	Task t2 =  tasks.create(name: app.name+"j", type:  JavaCompile) {
+	Task t2 =  tasks.create(name: app.name+"-compile", type:  JavaCompile) {
 		description = "compile "+app.name
 		
-		source = [ fileTree(dir: '.', include:"src/main/java/Main"+app.name+".java")]
-		destinationDir = file("src/main/java")
-		classpath = files("src/main/java") 
+		source = [ app.getMainSourceFile() ]
+		destinationDir = file("${projectDir}/tmp")
+		classpath = files("${jvarkitDir}/src/main/java") 
 		app.configurations.each{ classpath += configurations[it]}
-		
 		dependencyCacheDir = file(".")
 		sourceCompatibility = app.sourceCompatibility
 		targetCompatibility = app.targetCompatibility
@@ -140,26 +153,36 @@ for(final JvarkitApp app: apps) {
 		options.debug = true
 		options.warnings = true
 		options.deprecation  = true
-		options.sourcepath = files("src/main/java")
+		options.sourcepath = files("${jvarkitDir}src/main/java")
 		
 		doFirst {
-			ant.echo(message:"#Compiling "+app.name)
+			ant.echo(message:"#Compiling "+app.name+" "+app.getMainSource()+" ${jvarkitDir}")
+			ant.mkdir(dir : "${projectDir}/tmp/META-INF");
 			}
+			
 		}
 	
-	t2.dependsOn t1
+	t2.dependsOn jar_annotproc
 	
-	Task t3 = tasks.create(name: app.name+"p",type: Jar) {
+	Task t3 = tasks.create(name: app.name+"-jar",type: Jar) {
+		description = "package "+app.name
 		manifest {
 			attributes 'Implementation-Title': 'Gradle Jar File Example',  
 				'Implementation-Version': "1.0",
-				'Main-Class': 'com.mkyong.DateUtils'
+				'Main-Class': app.getMainClass()
 		    	}
 		 baseName = app.name + '-all'
-		 from {  zipTree(file("src/main/java"))  }
+		 from {  zipTree(file("${projectDir}/tmp"))  }
 		 with jar
+		 
+		 
+		doFirst {
+			ant.echo(message:"#packaging "+app.name)
+
+			}
 		}
 	
 	t3.dependsOn t2
 	}
-println tasks.getByPath('hello').path
+
+//println tasks.getByPath('hello').path
