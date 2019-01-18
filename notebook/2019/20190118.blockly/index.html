@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Hello World</title>
+  <script src="google-blockly/blockly_compressed.js"></script>
+  <script src="google-blockly/blocks_compressed.js"></script>
+  <script src="google-blockly/msg/js/en.js"></script>
+
+
+<script src="google-blockly/javascript_compressed.js"></script>
+
+  <style>
+    body {
+      background-color: #fff;
+      font-family: sans-serif;
+    }
+    h1 {
+      font-weight: normal;
+      font-size: 140%;
+    }
+  </style>
+</head>
+<body>
+  <h1>Test</h1>
+  <div id="helloBlockly" style="height: 480px; width: 600px;"></div>
+
+
+
+  <xml id="toolbox" style="display: none">
+	<!-- There are two categories that have special behaviours. Variable and function categories are defined with no contents, but with a 'custom' property of 'VARIABLE' or 'PROCEDURE' respectively. These categories will be populated automatically with the appropriate blocks. -->
+	<category name="Variables" custom="VARIABLE"></category>
+	<category name="Functions" custom="PROCEDURE"></category>
+	<sep gap="32"></sep>
+
+	<category name="Pierre" custom="PIERRE_CUSTOM"></category>
+
+	<category name="Custom blocks" expanded="true">
+		 <block type="vcfhead"></block>
+	</category>
+	<!-- Categories may be nested within other categories -->
+	 <category name="Root Of Tree" expanded="true">
+	   
+	    <category name="Category 1" colour="210">
+		    <block type="controls_repeat_ext"></block>
+		    <block type="math_number">
+		      <field name="NUM">123</field>
+		    </block>
+	   </category>
+	   <category name="Category 2" colour="210">
+		    <block type="math_arithmetic"></block>
+		    <block type="text"></block>
+		    <block type="text_print"></block>
+	   </category>
+	</category>
+  </xml>
+
+  <script>
+
+Blockly.Blocks['vcfhead'] = {
+  init: function() {
+    this.jsonInit({
+      "message0": 'vcfhead of %1 to %2',
+      "args0": [
+        {
+          "type": "field_colour",
+          "name": "VALUE1",
+          "check": "String"
+        },
+  	{
+          "type": "field_variable",
+          "name": "VALUE2",
+          "check": "String"
+        }
+
+      ],
+"message1": "do %1",
+"args1": [
+    {"type": "input_statement", "name": "DO"}
+  ],
+"message2": "select %1",
+"args2": [
+		{
+		"type": "field_dropdown",
+		"name": "FIELDNAME",
+		"options": [
+			[ "first item", "ITEM1" ],
+			[ "second item", "ITEM2" ]
+			]
+		}
+  	],
+
+      "output": "Number",
+      "colour": 160,
+      "tooltip": "Select the first variant of a vcf",
+      "helpUrl": "http://www.w3schools.com/jsref/jsref_length_string.asp"
+      //,"nextStatement":"VCF",
+      //,"previousStatement":"VCF"
+    });
+  }
+};
+
+var demoWorkspace = Blockly.inject('helloBlockly',
+        {
+	"media": 'google-blockly/media/',
+        "toolbox": document.getElementById('toolbox')
+	} );
+
+ /* Developers may also use the custom property to create dynamically populated flyout categories.  */
+ function customPierreCallback() {
+	var xmlList = [];
+	var block = Blockly.Xml.textToDom("<xml><block type=\"logic_compare\"></block></xml>").firstChild;
+	xmlList.push(block);
+	block = Blockly.Xml.textToDom("<xml><block type=\"controls_if\"></block></xml>").firstChild;
+	xmlList.push(block);
+	return xmlList;
+	}
+
+demoWorkspace.registerToolboxCategoryCallback(
+ 	 'PIERRE_CUSTOM', customPierreCallback);
+
+
+Blockly.BASH=new Blockly.Generator("Bash");
+Blockly.BASH.math_number=function(a){a=parseFloat(a.getFieldValue("NUM"));return["AA"]};
+Blockly.BASH.vcfhead=function(a){a.getFieldValue("VALUE2");return["VV"]};
+
+function showXml() {
+	var xml = Blockly.Xml.workspaceToDom(demoWorkspace);
+	var xml_text = Blockly.Xml.domToText(xml);
+	alert(xml_text);
+	}
+function showCode() {
+	var code = Blockly.BASH.workspaceToCode(demoWorkspace);
+	alert(code);
+	}
+
+  </script>
+<button onclick="showXml()">XML</button>
+<button onclick="showCode()">SHOW CODE</button>
+</body>
+</html>
+

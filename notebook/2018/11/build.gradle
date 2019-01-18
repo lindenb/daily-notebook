@@ -138,22 +138,14 @@ jar_annotproc.dependsOn compile_annotproc
 for(final JvarkitApp app: apps) {
 	
 	
-	Task t2 =  tasks.create(name: app.name+"-compile", type:  JavaCompile) {
+	Task t2 =  tasks.create(name: app.name+"-compile",DefaultTask) {
 		description = "compile "+app.name
 		
-		source = [ app.getMainSourceFile() ]
-		destinationDir = file("${projectDir}/tmp")
-		classpath = files("${jvarkitDir}/src/main/java") 
-		app.configurations.each{ classpath += configurations[it]}
-		dependencyCacheDir = file(".")
-		sourceCompatibility = app.sourceCompatibility
-		targetCompatibility = app.targetCompatibility
-		options.encoding = 'UTF-8'
-		options.listFiles = true
-		options.debug = true
-		options.warnings = true
-		options.deprecation  = true
-		options.sourcepath = files("${jvarkitDir}src/main/java")
+		@TaskAction
+		doIt {
+			System.err.println("ok");
+			}
+		
 		
 		doFirst {
 			ant.echo(message:"#Compiling "+app.name+" "+app.getMainSource()+" ${jvarkitDir}")
