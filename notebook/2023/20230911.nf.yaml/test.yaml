@@ -1,0 +1,7 @@
+samples:
+    -
+        biosample_id: WGS001
+        bam: WGS001.bam
+    -
+        biosample_id: WGS0002
+        bam: NWGS0002.bam
