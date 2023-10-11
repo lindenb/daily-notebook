@@ -1,0 +1,46 @@
+<html>
+<head>
+<style>
+#x {
+	display: flex;
+	position: absolute;
+	left: 100px;
+	top: 100px;
+	width : 200px;
+	height: 300px;
+	padding : 10px 10px 10px 10px;
+	background-color: red;
+ 	text-align: justify;
+ 	text-justify: distribute;
+	align-items: center;
+	}
+</style>
+<script>
+function isOverflow(element) {
+  return element.scrollHeight > element.clientHeight || element.scrollWidth > element.clientWidth;
+  }
+
+function adjust2(elt) {
+	var size=1;
+	for(;;) {
+		console.log("size="+size);
+		elt.style.fontSize = ""+(size+1)+"px";
+		if(isOverflow(elt)) break;
+		size++;
+		}
+	elt.style.fontSize = ""+(size)+"px";
+	}
+function adjust1(id) {
+	adjust2(document.getElementById(id));
+	}
+
+window.addEventListener("load", (event) => {
+	adjust1("x");
+});
+
+</script>
+</head>
+<body>
+<div id="x">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor. Cras elementum ultrices diam.</div>
+</body>
+</html>
