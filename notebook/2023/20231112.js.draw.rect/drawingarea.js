@@ -1,3 +1,42 @@
+class PopupMenu {
+	popupMenu;
+	constructor() {
+		console.log("ok");
+		var self=this;
+		this.popupMenu = document.createElement("ul");
+		this.popupMenu.setAttribute("style","list-style: none; padding: 0; margin: 0; position: absolute; background-color: #f9f9f9; border: 1px solid #ccc; box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);");
+		}
+	addMenu(text,fun) {
+		var self=this;
+		var li = document.createElement("li");
+		li.setAttribute("style", "padding: 8px; cursor: pointer;");
+		var a = document.createElement("a");
+		a.setAttribute("href","#");
+		li.appendChild(a);
+		a.appendChild(document.createTextNode(text));
+		a.addEventListener('click', (event) => {
+			fun(event);
+			self.dispose();
+			}, false);
+		this.popupMenu.appendChild(li);
+		}
+	dispose() {
+		var p = this.popupMenu.parentNode;
+		if(p!=null) p.removeChild(this.popupMenu);
+		}
+	show(event) {
+		console.log("ok show");
+		event.preventDefault();
+		this.dispose();
+		
+        var posX = event.clientX;
+        var posY = event.clientY;
+        this.popupMenu.style.left = posX + "px";
+        this.popupMenu.style.top = posY + "px";
+        document.body.appendChild(this.popupMenu);
+		}
+	}
+
 class DrawingArea {
 	
 
@@ -184,6 +223,7 @@ class DrawingArea {
         area.canvas.addEventListener('mouseup', (event) => {area.mouseUp(event);}, false);
         area.canvas.addEventListener('mousemove', (event) => {area.mouseMove(event);}, false);
         window.addEventListener('keydown', (event) => {area.keyDown(event);}, false);
+         area.canvas.addEventListener("contextmenu", (e) => {area.showPopupMenu(event); return false;}); 
 		area.rectangles.push(new DrawingArea.Rectangle(area,10,10,50,40));
 		area.repaint();
 		return area;
@@ -242,11 +282,14 @@ class DrawingArea {
 		ctx.restore();
 		}
 	findRectangleAtXY(x,y) {
+		var found=null;
 		for(var i in this.rectangles) {
 			var r = this.rectangles[i];
-			if(r.containsXY(x,y)) return r;
+			if(r.containsXY(x,y)) {
+				found = r;
+				}
 			}
-		return null;
+		return found;
 		}
 	
 	
@@ -326,8 +369,7 @@ class DrawingArea {
 		switch(evt.keyCode) {
 			case 46: //DEL
 				{
-				if(this.selected!=null)
-					{
+				if(this.selected!=null) {
 					const index = this.rectangles.indexOf(this.selected);
 					this.rectangles.splice(index, 1);
 					this.selected=null;
@@ -336,5 +378,31 @@ class DrawingArea {
 				break;
 				}
 			}
-		}		
+		}	
+	showPopupMenu(evt) {
+		var self=this;
+		if(this.selected!=null && this.selected.containsXY( evt.offsetX, evt.offsetY)) {
+			const index = self.rectangles.indexOf(this.selected);
+			var menu = new PopupMenu();
+			menu.addMenu("Remove Item",(evt)=>{
+				self.rectangles.splice(index, 1);
+				self.selected=null;
+				self.repaint();
+				});
+			menu.addMenu("Move Back",(evt)=>{
+				self.rectangles.splice(index, 1);
+				self.rectangles.splice(0, 0, self.selected);
+				self.repaint();
+				});
+			menu.addMenu("Move Front",(evt)=>{
+				self.rectangles.splice(index, 1);
+				self.rectangles.push(self.selected);
+				self.repaint();
+				});
+			
+			menu.show(evt);
+			}
+		this.is_dragging=false;
+		this.currentNewRect=null;
+		}	
 }
