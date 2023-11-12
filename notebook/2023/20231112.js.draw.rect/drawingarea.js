@@ -5,12 +5,13 @@ class DrawingArea {
 	 width;
 	 height;
 	 rectangles=[];
-	 selected=null;
+	 selected = null;
 	 selectedDrag = null;
 	 dragSize=3;
 	 is_dragging = false;
 	 prexX=null;
 	 prevY=null;
+	 currentNewRect;
 	 
 	static Drag = class _Drag {
 		rect;idx;
@@ -19,10 +20,16 @@ class DrawingArea {
 			this.idx = idx;
 			}
 		get startAngle() {
-			return 0;
+			switch(this.idx) {
+				case 0: return  0.5 * Math.PI;
+				default: return 0;
+				}
 			}
 		get endAngle() {
-			return  2 * Math.PI;
+			switch(this.idx) {
+				case 0: return  2.0 * Math.PI;
+				default: return  2 * Math.PI;
+				}
 			}
 		get x() {
 			return this.getX();
@@ -176,20 +183,23 @@ class DrawingArea {
 		area.canvas.addEventListener('mousedown', (event) => {area.mouseDown(event);}, false);
         area.canvas.addEventListener('mouseup', (event) => {area.mouseUp(event);}, false);
         area.canvas.addEventListener('mousemove', (event) => {area.mouseMove(event);}, false);
+        window.addEventListener('keydown', (event) => {area.keyDown(event);}, false);
 		area.rectangles.push(new DrawingArea.Rectangle(area,10,10,50,40));
 		area.repaint();
 		return area;
 		}
 	repaint() {
 		var ctx = this.canvas.getContext('2d');
+		ctx.save();
 		ctx.beginPath();
         ctx.rect(1,1,this.width-1,this.height-1);
 		ctx.fillStyle = "lightgray";
 		ctx.fill();
+		ctx.restore();
 		
 		for(var i in this.rectangles) {
 			var r = this.rectangles[i];
-			
+			ctx.save();
 			ctx.beginPath();
 			ctx.rect(r.x, r.y, r.width,r.height);
 			ctx.fillStyle = "white";
@@ -197,22 +207,39 @@ class DrawingArea {
 			ctx.lineWidth =  this.selected === r ?"2":"1";
 			ctx.strokeStyle = this.selected === r ? "red" : "darkgray";
 			ctx.stroke();
+			ctx.restore();
 			}
 		if(this.selected!=null) {
 			for(var i =0;i< 4;++i) {
 				var d = this.selected.getDrag(i);
+				ctx.save();
 				ctx.beginPath();
 				ctx.lineWidth = 2;
-				ctx.strokeStyle  = d.equals(this.selectedDrag)?"blue":"red";
+-               //ctx.fillStyle = "white";//(d.equals(this.selectedDrag)?"blue":"red");
 				ctx.arc(d.getX(),d.getY(), this.dragSize, d.startAngle, d.endAngle);
-				ctx.stroke();
+				ctx.fill();
+				ctx.restore();
 				}
 			}
+		if(this.currentNewRect!=null) {
+			var r =this.currentNewRect;
+			ctx.save();
+			ctx.beginPath();
+			ctx.lineWidth = 2;
+			ctx.setLineDash([5, 3]);
+			ctx.strokeStyle = "black";
+			ctx.rect(r.x, r.y, r.width,r.height);
+			ctx.stroke();
+			ctx.restore();
+			}
+		
+		ctx.save();
 		ctx.beginPath();
 		ctx.lineWidth = "1";
 		ctx.rect(1,1,this.width-1,this.height-1);
         ctx.strokeStyle = "darkgray";
 		ctx.stroke();
+		ctx.restore();
 		}
 	findRectangleAtXY(x,y) {
 		for(var i in this.rectangles) {
@@ -241,9 +268,11 @@ class DrawingArea {
 		var newdrag = this.findDragAtXY(this.prevX,this.prevY);
 		var newsel = newdrag!=null? newdrag.rect : this.findRectangleAtXY(this.prevX,this.prevY);
 		if(newsel==null) {
-			this.is_dragging = false;
+			this.is_dragging = true;
 			this.selected = null;
 			this.selectedDrag = null;
+			this.canvas.style.cursor="crosshair";
+			this.currentNewRect = new DrawingArea.Rectangle(this,this.prevX,this.prevY,1,1);
 			this.repaint();
 			}
 		else {
@@ -251,14 +280,21 @@ class DrawingArea {
 			this.is_dragging = true;
 			this.selectedDrag = newdrag;
 			console.log(newsel.x+" "+newsel.y+" "+newsel.maxX+" "+newsel.maxY);
+			this.canvas.style.cursor="grab";
 			this.repaint();
 			}
-		
 		}
+	
 	mouseUp(evt) {
-		if(!this.is_dragging) return;
+		this.canvas.style.cursor="default";
+		if(this.currentNewRect!=null) {
+			this.rectangles.push(this.currentNewRect);
+			this.currentNewRect = null;
+			this.repaint();
+			}
 		this.is_dragging = false;
 		}
+	
 	mouseMove(evt) {
 		if(!this.is_dragging) return;
 		var dx = evt.offsetX - this.prevX;
@@ -266,7 +302,15 @@ class DrawingArea {
 		this.prevX =  evt.offsetX;
 		this.prevY =  evt.offsetY;
 		
-		if(this.selectedDrag!=null) {
+		if(this.currentNewRect!=null) {
+			if( this.prevX > this.currentNewRect.x && this.prevX < this.width && 
+				this.prevY > this.currentNewRect.y && this.prevY < this.height) {
+				this.currentNewRect.width = this.prevX - this.currentNewRect.x;
+				this.currentNewRect.height = this.prevY - this.currentNewRect.y;
+				this.repaint();
+				}
+			}
+		else if(this.selectedDrag!=null) {
 			if(this.selectedDrag.moveTo(this.prevX,this.prevY)) {
 				this.repaint();
 				}
@@ -278,5 +322,19 @@ class DrawingArea {
 			}
 		
 		}
-	
+	keyDown(evt) {
+		switch(evt.keyCode) {
+			case 46: //DEL
+				{
+				if(this.selected!=null)
+					{
+					const index = this.rectangles.indexOf(this.selected);
+					this.rectangles.splice(index, 1);
+					this.selected=null;
+					this.repaint();
+					}
+				break;
+				}
+			}
+		}		
 }
