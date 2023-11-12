@@ -1,0 +1,25 @@
+SELECT DISTINCT ?gene ?geneSymbol  ?disease1 ?disease1Name ?disease2 ?disease2Name
+WHERE {
+
+?gene a ncit:C16612 .
+?gene sio:SIO_000205 ?geneInfo .
+?geneInfo skos:exactMatch ?geneSymbol .
+
+?gene2disease1 a sio:SIO_000983 .
+?gene2disease1 sio:SIO_000628  ?gene .
+?gene2disease1 sio:SIO_000628  ?disease1 .
+?disease1 a ncit:C7057 .
+?disease1 skos:exactMatch ?disease1Name .
+
+
+?gene2disease2 a sio:SIO_000983 .
+?gene2disease2 sio:SIO_000628  ?gene .
+?gene2disease2 sio:SIO_000628  ?disease2 .
+?disease2 a ncit:C7057 .
+?disease2 skos:exactMatch ?disease2Name .
+
+FILTER(STR(?disease1) <STR(?disease2))
+
+} LIMIT 20
+
+
