@@ -36,7 +36,7 @@
 	<category name="Pierre" custom="PIERRE_CUSTOM"></category>
 
 	<category name="Custom blocks" expanded="true">
-		 <block type="vcfhead"></block>
+		 <block type="feGaussianBlur"></block>
 	</category>
 	<!-- Categories may be nested within other categories -->
 	 <category name="Root Of Tree" expanded="true">
@@ -57,22 +57,16 @@
 
   <script>
 
-Blockly.Blocks['vcfhead'] = {
+Blockly.Blocks['feGaussianBlur'] = {
   init: function() {
     this.jsonInit({
-      "message0": 'vcfhead of %1 to %2',
+      "message0": 'feGaussianBlur  %1 ',
       "args0": [
         {
-          "type": "field_colour",
-          "name": "VALUE1",
-          "check": "String"
-        },
-  	{
-          "type": "field_variable",
-          "name": "VALUE2",
-          "check": "String"
+          "type": "input_value",
+          "name": "stdDeviation",
+          "check": "Number"
         }
-
       ],
 "message1": "do %1",
 "args1": [
@@ -92,8 +86,8 @@ Blockly.Blocks['vcfhead'] = {
 
       "output": "Number",
       "colour": 160,
-      "tooltip": "Select the first variant of a vcf",
-      "helpUrl": "http://www.w3schools.com/jsref/jsref_length_string.asp"
+      "tooltip": "svg:feGaussianBlur",
+      "helpUrl": "https://developer.mozilla.org/en-US/docs/Web/SVG/Element/feGaussianBlur"
       //,"nextStatement":"VCF",
       //,"previousStatement":"VCF"
     });
@@ -102,7 +96,7 @@ Blockly.Blocks['vcfhead'] = {
 
 var demoWorkspace = Blockly.inject('helloBlockly',
         {
-	"media": 'google-blockly/media/',
+		"media": 'google-blockly/media/',
         "toolbox": document.getElementById('toolbox')
 	} );
 
@@ -122,7 +116,7 @@ demoWorkspace.registerToolboxCategoryCallback(
 
 Blockly.BASH=new Blockly.Generator("Bash");
 Blockly.BASH.math_number=function(a){a=parseFloat(a.getFieldValue("NUM"));return["AA"]};
-Blockly.BASH.vcfhead=function(a){a.getFieldValue("VALUE2");return["VV"]};
+Blockly.BASH.feGaussianBlur = function(a){a.getFieldValue("VALUE2");return["VV"]};
 
 function showXml() {
 	var xml = Blockly.Xml.workspaceToDom(demoWorkspace);
