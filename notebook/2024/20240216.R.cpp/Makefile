@@ -1,9 +1,18 @@
+##
+## https://stackoverflow.com/questions/78041173/
+##
 SHELL=/bin/bash
 CC=gcc
 R_VERSION=4.3.2
 
-test: TMP/RSession.class  TMP/libRSession.so
+tests: test1 test2
+
+test1: TMP/RSession.class  TMP/libRSession.so
 	echo | R_HOME=${PWD}/TMP/lib/R PATH=$${PATH}:{PWD}/TMP/R-$(R_VERSION)/bin  java -Djava.library.path=${PWD}/TMP:TMP/R-$(R_VERSION)/lib -cp TMP RSession "${PWD}/TMP/R-$(R_VERSION)/bin/R"
+
+test2: standalone.c TMP/R-$(R_VERSION)/lib/libR.so
+	$(CC)  `TMP/R-$(R_VERSION)/bin/R CMD config --cppflags` -rpath TMP/R-$(R_VERSION)/lib -L ${PWD}/TMP -o ./a.out $< -lR
+	./a.out
 
 TMP/libRSession.so : RSession.c TMP/R-$(R_VERSION)/lib/libR.so TMP/RSession.h
 	$(CC)  -ITMP -I$${JAVA_HOME}/include/ -I$${JAVA_HOME}/include/linux \
@@ -28,4 +37,4 @@ TMP/R-$(R_VERSION)/lib/libR.so :
 
 
 clean:
-	rm -rvf TMP *.so *.o hs_err*
+	rm -rvf TMP *.so *.o hs_err* ./a.out
