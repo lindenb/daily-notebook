@@ -11,7 +11,7 @@
 #define WHERE fprintf(stderr,"%s:%s:%d\n",__FILE__,__FUNCTION__,__LINE__)
 
 JNIEXPORT void JNICALL Java_RSession_test
-  (JNIEnv *, jclass) {
+  (JNIEnv * env, jclass clazz) {
     WHERE;
    }
 

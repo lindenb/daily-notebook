@@ -24,7 +24,7 @@ TMP/R-$(R_VERSION)/lib/libR.so :
 	wget -O TMP/jeter.tar.gz "https://pbil.univ-lyon1.fr/CRAN/src/base/R-4/R-$(R_VERSION).tar.gz"
 	# --with-blas=no
 	# --enable-R-static-lib
-	(cd TMP && tar xfz jeter.tar.gz && rm jeter.tar.gz &&  cd R-$(R_VERSION) &&  ./configure  --enable-R-shlib --with-x=no --prefix=${PWD}/TMP && make && make install)
+	(cd TMP && tar xfz jeter.tar.gz && rm jeter.tar.gz &&  cd R-$(R_VERSION) &&  ./configure --with-pcre1 --enable-R-shlib --with-x=no --prefix=${PWD}/TMP && make && make install)
 
 
 clean:
