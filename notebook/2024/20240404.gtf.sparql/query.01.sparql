@@ -1,0 +1,34 @@
+PREFIX bio: <https://www.biostars.org/#>
+PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT 
+	?build
+	?chrom
+	?start
+	?end
+	?gene_id
+	?gene_name
+	?gene_biotype
+	?go_id
+	?go_label
+WHERE {
+?gene bio:gene_name ?gene_name .
+?gene bio:gene_biotype ?gene_biotype .
+?gene bio:gene_id ?gene_id .
+?gene bio:location ?loc .
+?loc a bio:Location .
+?loc bio:build ?build .
+?loc bio:chrom ?chrom .
+?loc bio:start ?start .
+?loc bio:end ?end .
+OPTIONAL {
+	?gene bio:has_go_term ?go .
+	?go bio:go_id ?go_id .
+	?go rdfs:label ?go_label .
+	}
+
+FILTER( ?start <= 20746689 ) .
+FILTER( ?end >= 20746689 ) .
+FILTER( ?chrom = "1" ) .
+}
