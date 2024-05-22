@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<style>
+.parent{
+  width:300px;
+  border:5px solid red;
+  overflow-x: hidden; 
+  float:left;
+}
+
+
+.child {
+  width:1000px;
+  padding:10px;
+  float:left;
+  font-size:15px;
+  font-family:arial;
+  padding:10px;
+  cursor: pointer;
+}
+
+	</style>
+	<script>
+
+
+
+	</script>
+	<script>
+
+/*
+class Date {
+	Date() {
+		this.year  = 0;
+		this.month = 0;
+		this.day = 0;
+		}
+	}
+
+
+class Event {
+	Event() {
+		}
+	getStart() {
+		return this.year*365+this.month*30+this.day;
+		}
+	getDay() {
+		return this.year*365+this.month*30+this.day;
+		}
+	}
+
+class Track {
+	Track() {
+		}
+	} */
+
+
+class Timeline {
+	constructor(name) {
+		this.name = name;
+		this.element = document.getElementById(name);
+		let me = this;
+		this.is_drag = false;
+		this.element.addEventListener("pointerdown",()=>me.doDragStart());
+		addEventListener("pointerup", ()=>me.doDragEnd());
+  		addEventListener("pointermove", (E)=>me.doDrag(E));
+		}
+	doDragStart() {
+		console.log("drag start");
+		this.is_drag = true;
+		}
+	doDragEnd() {
+		console.log("drag end");
+		this.is_drag = false;
+		}
+	doDrag(event) {
+		if(!this.is_drag) return;
+		console.log("drag "+event.movementX);
+		this.element.scrollLeft -= event.movementX;		
+		}
+	}
+
+window.addEventListener("load", evt=>{
+	new Timeline("main");
+	});
+	</script>
+    <meta charset="utf-8"></meta>
+    <title></title>
+</head>
+<body>
+<div class="parent" id="main">
+	<div class="child">
+Click, hold and move pointer</b>. Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has
+    survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing
+    software like Aldus PageMaker including versions of Lorem Ipsum
+	</div>
+</div>
+
+</body>

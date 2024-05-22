@@ -2,6 +2,8 @@
 
 test group tuple with array [] as item
 
+~/src/nextflow/nextflow run main.nf -resume
+
 */
 
 workflow {
