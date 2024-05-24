@@ -3,16 +3,21 @@
 
 
 struct Global {
+    /** inputstream */
+    FILE* in;
+    /** currrent value */
     int value;
-    char buffer[2048];//should be large enough
+    /** contains script as string */
+    char buffer[2048];
     };
 
 static struct Global global;
 
 /** retrieve the next record, return #t on success */
 static SCM _next () {
-  global.value++;
-  return global.value<100?SCM_BOOL_T:SCM_BOOL_F;
+  int ret = fscanf(global.in,"%d", &(global.value));
+  if(ret!=1) return SCM_BOOL_F;
+  return SCM_BOOL_T;
 }
 /** get current number */
 static SCM _get () {
@@ -46,6 +51,7 @@ inner_main (void *data)
 int main(int argc,char** argv) {
     if(argc!=2) return -1;
     global.value=1;
+    global.in = stdin;
     sprintf(global.buffer,"(while (_next) (if %s  (_emit)   ) (_dispose) )  ",argv[1]);
     scm_with_guile(inner_main,(void*)&global);
     return 0;
