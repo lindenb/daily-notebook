@@ -6,6 +6,7 @@
 #include <htslib/hts.h>
 #include <htslib/vcf.h>
 #include <htslib/tbx.h>
+#include <htslib/synced_bcf_reader.h>
 #define WHERE do {fprintf(stderr,"[%s:%d]",__FILE__,__LINE__);} while(0)
 #define WARNING(...) do { fputs("[WARNING]",stderr);WHERE;fprintf(stderr,__VA_ARGS__);fputc('\n',stderr);} while(0)
 #define ERROR(...) do { fputs("[ERROR]",stderr);WHERE;fprintf(stderr,__VA_ARGS__);fputc('\n',stderr);abort();} while(0)
@@ -39,6 +40,24 @@ if(bcf==NULL) {
     return EXIT_FAILURE;
     }
 
+int i;
+	int nfiles=1;
+ bcf_srs_t *sr = bcf_sr_init();
+        bcf_sr_set_opt(sr, BCF_SR_PAIR_LOGIC, BCF_SR_PAIR_BOTH_REF);
+        bcf_sr_set_opt(sr, BCF_SR_REQUIRE_IDX);
+        for (i=0; i<nfiles; i++)
+            bcf_sr_add_reader(sr,argv[1]);
+        while ( bcf_sr_next_line(sr) )
+        {
+            for (i=0; i<nfiles; i++)
+            {
+                bcf1_t *line = bcf_sr_get_line(sr,i);
+fprintf(stderr,"LINE\n");
+
+            }
+        }
+        if ( sr->errnum ) ERROR("Error: %s\n", bcf_sr_strerror(sr->errnum));
+        bcf_sr_destroy(sr);
 
 tbx_destroy(idx);
 bcf_destroy(bcf);
@@ -48,5 +67,6 @@ if(ret<-1) {
     ERROR("IO error in input VCF.\n");
     return EXIT_FAILURE;
     }
+fprintf(stderr,"OK\n");
 return EXIT_SUCCESS;
 }
