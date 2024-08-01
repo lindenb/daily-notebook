@@ -138,7 +138,7 @@ int indexed_vcf_find_first(indexed_vcf_t* reader,int tid,hts_pos_t start,hts_pos
        if ( reader->tbx_idx !=NULL )
         {
         
-              fprintf(stderr," searching first in interval =%"PRIu64" %"PRIu64" \n",start,end);
+            //fprintf(stderr," searching first in interval =%"PRIu64" %"PRIu64" \n",start,end);
             itr= tbx_itr_queryi(reader->tbx_idx,tid,start,end+1);
             if(itr==NULL) {
                 ret = STATUS_ERROR;
@@ -219,7 +219,7 @@ int scan(const char* filename) {
             if(dist<1) break;
             hts_pos_t mid = curr+dist;
 
-            fprintf(stderr,"curr=%"PRIu64" mid=%"PRIu64" high=%"PRIu64" dist= %"PRIu64"\n",curr,mid, high,dist);
+            //fprintf(stderr,"curr=%"PRIu64" mid=%"PRIu64" high=%"PRIu64" dist= %"PRIu64"\n",curr,mid, high,dist);
             hts_pos_t new_pos;
             ret = indexed_vcf_find_first(reader,i,mid,high+1,&new_pos);
             if(ret==STATUS_ERROR) {
@@ -228,13 +228,13 @@ int scan(const char* filename) {
             if(ret==STATUS_NOT_FOUND) {
                 high=mid;
                 ret=0;
-                fprintf(stderr," NOT FOUND now high=%"PRIu64" \n",high);
+                //fprintf(stderr," NOT FOUND now high=%"PRIu64" \n",high);
                 }
             else
                 {
                 if(curr==new_pos) break;
                 curr=new_pos;
-                fprintf(stderr,"even fareset: %"PRIu64"  %"PRIu64"   \n",curr,high);
+                //fprintf(stderr,"even fareset: %"PRIu64"  %"PRIu64"   \n",curr,high);
                 }
             }
         printf("%s\t%" PRIu64 "\t%" PRIu64 "\t%s\n",ctg_name,first_pos,curr+1,filename);
