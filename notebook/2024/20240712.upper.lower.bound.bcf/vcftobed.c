@@ -6,6 +6,7 @@
 #include <htslib/hts.h>
 #include <htslib/vcf.h>
 #include <htslib/tbx.h>
+#include <htslib/bgzf.h>
 #include <htslib/synced_bcf_reader.h>
 #define WHERE do {fprintf(stderr,"[%s:%d]",__FILE__,__LINE__);} while(0)
 #define WARNING(...) do { fputs("[WARNING]",stderr);WHERE;fprintf(stderr,__VA_ARGS__);fputc('\n',stderr);} while(0)
@@ -21,6 +22,18 @@ typedef struct indexed_vcf_t {
     bcf1_t *rec;
     kstring_t line;
     } indexed_vcf_t;
+
+static int mystrtoll(const char* s,hts_pos_t* v) {
+   char* end = NULL;
+    *v = strtoll(s, &end, 10);
+    if (end == s ||*end!=0 || *v < 0)
+        {
+        fprintf(stderr,"Warning: cannot parse value %s\n",s);
+        return -1;
+        }
+   return 0;
+   }
+            
 
 void indexed_vcf_close(indexed_vcf_t* reader) {
     if(reader==NULL) return;
@@ -85,10 +98,8 @@ const char* indexed_vcf_ctg_name(indexed_vcf_t* reader, int tid, hts_pos_t* len)
             return NULL;
             }
         int hkey = bcf_hrec_find_key(hrec, "length");
-        char *end = hrec->vals[hkey];
-        *len = strtoll(hrec->vals[hkey], &end, 10);
-        if (end == hrec->vals[hkey] || *len < 0)
-            {
+
+        if(mystrtoll(hrec->vals[hkey],len)!=0) {
             fprintf(stderr,"Warning: cannot determine contig \"%s\" for length:%s\n",ctg_name, hrec->vals[hkey]);
             return NULL;
             }
@@ -97,6 +108,41 @@ const char* indexed_vcf_ctg_name(indexed_vcf_t* reader, int tid, hts_pos_t* len)
 #define STATUS_ERROR -2
 #define STATUS_NOT_FOUND -4
 
+static int only_chrom_pos(BGZF *fp, void *tbxv, void *sv, int *tid, hts_pos_t *beg, hts_pos_t *end) {
+
+    tbx_t *tbx = (tbx_t *) tbxv;
+    kstring_t ctg = {0,0,0};
+    kstring_t *s = (kstring_t *) sv;
+    int c;
+
+    hts_pos_t pos1=0UL;
+    
+
+    while((c=bgzf_getc(fp))>0) {
+        if(c=='\t') break;
+        kputc(c,&ctg);
+        }
+    if(c<0) {
+        WARNING("boum");
+        return -1;
+        }
+    ks_clear(s);
+    while((c=bgzf_getc(fp))>0) {
+        if(c=='\t') break;
+        kputc(c,s);
+        pos1= pos1*10 + (c-(int)'0');
+        }
+   if(c<0) {
+        WARNING("boum");
+        return -1;
+        }
+    *tid=  tbx_name2id(tbx,ctg.s);
+    *beg=pos1;
+    *end=pos1;
+    ks_free(&ctg);
+    return 0;
+    }
+    
 int indexed_vcf_find_first(indexed_vcf_t* reader,int tid,int start,int end, hts_pos_t* pos) {
        hts_itr_t* itr= NULL; 
        int ret = STATUS_ERROR;
@@ -107,9 +153,12 @@ int indexed_vcf_find_first(indexed_vcf_t* reader,int tid,int start,int end, hts_
                 ret = STATUS_ERROR;
                 goto cleanup;
                 }
-       
+            itr->readrec = only_chrom_pos;
+            
+            
             ret = tbx_itr_next(reader->in, reader->tbx_idx, itr, &reader->line);
             if ( ret < -1 )  {
+                WARNING("error occured");
                 ret = STATUS_ERROR;
                 goto cleanup;
                 }
@@ -117,12 +166,13 @@ int indexed_vcf_find_first(indexed_vcf_t* reader,int tid,int start,int end, hts_
                 ret = STATUS_NOT_FOUND;
                 goto cleanup;
                 }
-            ret = vcf_parse1(&reader->line, reader->hdr, reader->rec);
-            if ( ret<0 ) {
+
+                
+             if(mystrtoll(reader->line.s,pos)!=0) {
                 ret = STATUS_ERROR;
                 goto cleanup;
                 }
-             *pos = reader->rec->pos;
+             *pos= *pos-1;
              ret = 0;
         }   
         else
@@ -151,32 +201,34 @@ int indexed_vcf_find_first(indexed_vcf_t* reader,int tid,int start,int end, hts_
 
 
 int scan(const char* filename) {
-    int i;
+    int i,ret=EXIT_SUCCESS;
     indexed_vcf_t* reader = indexed_vcf_open(filename);
     if(reader==NULL) return EXIT_FAILURE;
 
-    fprintf(stderr,"%d sequence in %s\n",reader->nseq,filename);
+    //fprintf(stderr,"%d sequence in %s\n",reader->nseq,filename);
     for(i=0;i< reader->nseq; i++) {
         hts_pos_t len, first_pos, curr,high;
         const char* ctg_name= indexed_vcf_ctg_name(reader,i,&len);
         if(ctg_name==NULL) continue;
-        fprintf(stderr,"%s /  %d\n",ctg_name,(int)len);
+        //fprintf(stderr,"%s /  %"PRIu64"\n",ctg_name,len);
         
-        int ret = indexed_vcf_find_first(reader,i,0,len+1,&first_pos);
+        ret = indexed_vcf_find_first(reader,i,0,len+1,&first_pos);
         if(ret==STATUS_ERROR) {
             break;
             }
         if(ret==STATUS_NOT_FOUND) {
             continue;
             }
-        printf("1st : %d \n",first_pos);
+       // printf("1st : %"PRIu64" \n",first_pos);
         curr = first_pos;
         high = len+1;
         for(;;) {
-            fprintf(stderr,"%d %d\n",curr,high);
-            hts_pos_t dist = (high-curr);
-            if(dist/2==0) break;
-            hts_pos_t mid = curr+dist/2;
+
+            hts_pos_t dist = (high-curr)/2;
+            if(dist<1) break;
+            hts_pos_t mid = curr+dist;
+
+           // fprintf(stderr,"curr=%"PRIu64" mid=%"PRIu64" high=%"PRIu64" dist= %"PRIu64"\n",curr,mid, high,dist);
             hts_pos_t new_pos;
             ret = indexed_vcf_find_first(reader,i,mid,high+1,&new_pos);
             if(ret==STATUS_ERROR) {
@@ -184,17 +236,20 @@ int scan(const char* filename) {
                 }
             if(ret==STATUS_NOT_FOUND) {
                 high=mid;
+                ret=0;
+                //fprintf(stderr," NOT FOUND now high=%"PRIu64" \n",high);
                 }
             else
                 {
-                printf("now farest : %d \n",new_pos);
-                curr=mid;
+                if(curr==new_pos) break;
+                curr=new_pos;
+                //fprintf(stderr,"even fareset: %"PRIu64"  %"PRIu64"   \n",curr,high);
                 }
             }
-         printf("%s\t%d\t%d\t%s\n",ctg_name,first_pos,curr+1,filename);
+        printf("%s\t%" PRIu64 "\t%" PRIu64 "\t%s\n",ctg_name,first_pos,curr+1,filename);
         }
     indexed_vcf_close(reader);
-    return EXIT_SUCCESS;
+    return ret;
     }
 
 int main(int argc,char** argv) {
