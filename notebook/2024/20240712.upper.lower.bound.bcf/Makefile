@@ -1,5 +1,5 @@
-HTSDIR=../../../../htslib/
-CFLAGS=-I$(HTSDIR) -Wall -g
+HTSDIR=../../../../htslib
+CFLAGS=-I$(HTSDIR) -I$(dir $(HTSDIR))bcftools -Wall -g
 LDFLAGS=-L$(HTSDIR)  -lm -lpthread -lhts -lz -llzma -lbz2
 
 test2: a.out
