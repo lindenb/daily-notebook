@@ -40,6 +40,15 @@ touch ${bed.name}.sample${meta.id}.g.vcf.gz.tbi
 """
 }
 
+process PRINT {
+input:
+    path("VCFS/*")
+script:
+"""
+find VCFS/ -name "*.vcf.gz" -exec cat '{}' ';' | sort -V > merge.tsv
+"""
+}
+
 workflow COMBINE_GVCF {
 take:
     meta
@@ -65,5 +74,5 @@ main:
     DIVIDE_AND_CONQUER6(meta, 6,DIVIDE_AND_CONQUER5.out.failed_gvcf_bed)
     combined_gvcf = combined_gvcf.mix(DIVIDE_AND_CONQUER6.out.combined_gvcf)
 
-    combined_gvcf.view{"COMBINED : ${it}"}
+    PRINT(combined_gvcf.map{it[1]}.collect());
 }
